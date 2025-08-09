@@ -125,20 +125,23 @@ print_status "Additional tools installed"
 
 # Install certbot for SSL
 print_info "Installing certbot for SSL..."
-dnf install -y snapd
-systemctl enable --now snapd.socket
-ln -sf /var/lib/snapd/snap /snap
-snap install core; snap refresh core
-snap install --classic certbot
-ln -sf /snap/bin/certbot /usr/bin/certbot
-print_status "Certbot installed"
+dnf install -y python3-certbot-nginx
+print_status "Certbot installed via DNF"
 
 # Create application user
 print_info "Creating application user..."
 if ! id "frnsw" &>/dev/null; then
     useradd -r -m -d /var/www/frnsw -s /bin/bash frnsw
+    print_status "Application user 'frnsw' created"
+else
+    print_status "Application user 'frnsw' already exists"
 fi
-print_status "Application user created"
+
+# Ensure user has proper home directory
+if [ ! -d "/var/www/frnsw" ]; then
+    mkdir -p /var/www/frnsw
+    chown frnsw:frnsw /var/www/frnsw
+fi
 
 # Create application directory
 print_info "Setting up application directory..."
@@ -388,8 +391,22 @@ chown -R frnsw:frnsw /var/www/frnsw
 # Install backend dependencies
 print_info "Installing backend dependencies..."
 cd /var/www/frnsw/backend
-sudo -u frnsw npm install --production
-print_status "Backend dependencies installed"
+
+# Install dependencies with error checking
+if sudo -u frnsw npm install --production; then
+    print_status "Backend dependencies installed"
+else
+    print_error "Failed to install backend dependencies"
+    print_info "Retrying with cache clean..."
+    sudo -u frnsw npm cache clean --force
+    sudo -u frnsw npm install --production
+    if [ $? -eq 0 ]; then
+        print_status "Backend dependencies installed after retry"
+    else
+        print_error "Failed to install backend dependencies after retry"
+        exit 1
+    fi
+fi
 
 # Create basic database schema
 print_info "Creating basic database schema..."
@@ -436,13 +453,44 @@ print_status "Database schema created"
 # Start application with PM2
 print_info "Starting application with PM2..."
 cd /var/www/frnsw
-sudo -u frnsw pm2 start ecosystem.config.js --env production
-sudo -u frnsw pm2 save
-sudo -u frnsw pm2 startup | grep 'sudo env' | bash
-print_status "Application started with PM2"
+
+# Start PM2 with error checking
+if sudo -u frnsw pm2 start ecosystem.config.js --env production; then
+    sudo -u frnsw pm2 save
+    # Setup PM2 startup
+    STARTUP_CMD=$(sudo -u frnsw pm2 startup | grep 'sudo env' || echo "")
+    if [ ! -z "$STARTUP_CMD" ]; then
+        eval "$STARTUP_CMD"
+    fi
+    print_status "Application started with PM2"
+    
+    # Wait a moment and check if app is actually running
+    sleep 3
+    if sudo -u frnsw pm2 list | grep -q "online"; then
+        print_status "Application is running successfully"
+    else
+        print_warning "Application may not be running properly"
+        sudo -u frnsw pm2 logs --lines 10
+    fi
+else
+    print_error "Failed to start application with PM2"
+    print_info "Checking PM2 logs..."
+    sudo -u frnsw pm2 logs --lines 10
+    exit 1
+fi
 
 # Configure Nginx
 print_info "Configuring Nginx..."
+
+# Create sites directories if they don't exist
+mkdir -p /etc/nginx/sites-available
+mkdir -p /etc/nginx/sites-enabled
+
+# Include sites-enabled in main nginx config if not already included
+if ! grep -q "include /etc/nginx/sites-enabled" /etc/nginx/nginx.conf; then
+    sed -i '/include \/etc\/nginx\/conf.d\/\*.conf;/a\    include /etc/nginx/sites-enabled/*;' /etc/nginx/nginx.conf
+fi
+
 cat > /etc/nginx/sites-available/frnsw-recalls-90 << EOF
 server {
     listen 80;
@@ -519,11 +567,19 @@ EOF
 ln -sf /etc/nginx/sites-available/frnsw-recalls-90 /etc/nginx/sites-enabled/
 rm -f /etc/nginx/sites-enabled/default
 
+# Remove default nginx page if it exists
+rm -f /etc/nginx/conf.d/default.conf
+
 # Test Nginx configuration
 nginx -t
-systemctl enable nginx
-systemctl restart nginx
-print_status "Nginx configured and started"
+if [ $? -eq 0 ]; then
+    systemctl enable nginx
+    systemctl restart nginx
+    print_status "Nginx configured and started"
+else
+    print_error "Nginx configuration test failed"
+    exit 1
+fi
 
 # Configure firewall
 print_info "Configuring firewall..."
@@ -561,10 +617,43 @@ EOF
 
 chmod 600 /root/FRNSW_DEPLOYMENT_INFO.txt
 
+# Final verification
+print_info "Running final verification..."
+
+# Test local health endpoint
+if curl -f -s http://localhost:3001/health > /dev/null; then
+    print_status "Backend health check: ✅ PASSED"
+else
+    print_warning "Backend health check: ❌ FAILED"
+fi
+
+# Test nginx proxy
+if curl -f -s http://localhost/health > /dev/null; then
+    print_status "Nginx proxy check: ✅ PASSED"
+else
+    print_warning "Nginx proxy check: ❌ FAILED"
+fi
+
+# Check PM2 status
+if sudo -u frnsw pm2 list | grep -q "online"; then
+    print_status "PM2 process check: ✅ PASSED"
+else
+    print_warning "PM2 process check: ❌ FAILED"
+fi
+
+# Check services
+for service in nginx mysqld firewalld; do
+    if systemctl is-active --quiet $service; then
+        print_status "$service service: ✅ RUNNING"
+    else
+        print_warning "$service service: ❌ NOT RUNNING"
+    fi
+done
+
 print_header
 print_status "🎉 FRNSW Recalls 90 server deployment completed!"
 echo
-print_info "🌐 Your application is now live at:"
+print_info "🌐 Your application should be live at:"
 echo "    http://${DOMAIN_NAME}"
 echo
 print_info "🔍 Test these URLs:"
@@ -578,11 +667,13 @@ print_info "🔧 Useful commands:"
 echo "    sudo -u frnsw pm2 status    # Check app status"
 echo "    sudo -u frnsw pm2 logs      # View logs"
 echo "    sudo -u frnsw pm2 restart all  # Restart app"
+echo "    systemctl status nginx      # Check nginx"
+echo "    curl http://localhost:3001/health  # Test backend directly"
 echo
 print_warning "📝 Next steps:"
 echo "    1. Upload your complete application files"
 echo "    2. Configure email settings in /var/www/frnsw/backend/.env"
-echo "    3. Setup SSL certificate: /usr/bin/certbot --nginx -d ${DOMAIN_NAME}"
+echo "    3. Setup SSL certificate: certbot --nginx -d ${DOMAIN_NAME}"
 echo "    4. Test all functionality"
 echo
 print_status "Deployment completed successfully!"
