@@ -4,7 +4,8 @@
 # Customized for frnswrecall90.interactivewebs.com
 # Run this on a fresh AlmaLinux server as root
 
-set -e  # Exit on any error
+# Safer bash options: exit on error, on unset vars, and on pipe failures
+set -Eeuo pipefail
 
 # Pre-configured settings
 DOMAIN_NAME="frnswrecall90.interactivewebs.com"
@@ -76,11 +77,17 @@ print_info "Enabling EPEL repository..."
 dnf install -y epel-release
 print_status "EPEL repository enabled"
 
-# Install Node.js 20
+# Install Node.js 20 (with fallback to DNF module if NodeSource fails)
 print_info "Installing Node.js 20..."
-curl -fsSL https://rpm.nodesource.com/setup_20.x | bash -
-dnf install -y nodejs
-print_status "Node.js $(node --version) installed"
+if curl -fsSL https://rpm.nodesource.com/setup_20.x | bash - && dnf install -y nodejs; then
+  print_status "Node.js $(node --version) installed via NodeSource"
+else
+  print_warning "NodeSource install failed. Falling back to DNF module for Node.js 20"
+  dnf module reset -y nodejs || true
+  dnf module enable -y nodejs:20 || true
+  dnf install -y nodejs
+  print_status "Node.js $(node --version) installed via DNF module"
+fi
 
 # Install MySQL
 print_info "Installing MySQL..."
@@ -127,6 +134,9 @@ print_status "Additional tools installed"
 print_info "Installing certbot for SSL..."
 dnf install -y python3-certbot-nginx
 print_status "Certbot installed via DNF"
+
+# Allow Nginx to connect to backend when SELinux is enforcing
+setsebool -P httpd_can_network_connect 1 || true
 
 # Create application user
 print_info "Creating application user..."
@@ -457,11 +467,8 @@ cd /var/www/frnsw
 # Start PM2 with error checking
 if sudo -u frnsw pm2 start ecosystem.config.js --env production; then
     sudo -u frnsw pm2 save
-    # Setup PM2 startup
-    STARTUP_CMD=$(sudo -u frnsw pm2 startup | grep 'sudo env' || echo "")
-    if [ ! -z "$STARTUP_CMD" ]; then
-        eval "$STARTUP_CMD"
-    fi
+    # Setup PM2 to start on boot for user 'frnsw'
+    pm2 startup systemd -u frnsw --hp /var/www/frnsw >/dev/null 2>&1 || true
     print_status "Application started with PM2"
     
     # Wait a moment and check if app is actually running
@@ -495,6 +502,7 @@ cat > /etc/nginx/sites-available/frnsw-recalls-90 << EOF
 server {
     listen 80;
     server_name ${DOMAIN_NAME};
+    client_max_body_size 10m;
     
     # Security headers
     add_header X-Frame-Options DENY;
@@ -649,6 +657,11 @@ for service in nginx mysqld firewalld; do
         print_warning "$service service: ❌ NOT RUNNING"
     fi
 done
+
+# Basic port checks (using ss)
+print_info "Checking listening ports..."
+ss -tlnp | grep ":3001" || print_warning "Port 3001 not listening"
+ss -tlnp | grep ":80" || print_warning "Port 80 not listening"
 
 print_header
 print_status "🎉 FRNSW Recalls 90 server deployment completed!"
