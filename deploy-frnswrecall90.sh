@@ -96,9 +96,40 @@ systemctl enable mysqld
 systemctl start mysqld
 print_status "MySQL installed and started"
 
-# Secure MySQL installation
+# Secure MySQL installation (handle temporary password flow on MySQL 8)
 print_info "Securing MySQL installation..."
-mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}';"
+
+# Wait briefly for MySQL to be fully ready
+sleep 2
+
+ROOT_PASSWORD_SET=false
+
+# Case 1: root without password works (fresh insecure root)
+if mysql -u root -e "SELECT 1" >/dev/null 2>&1; then
+  mysql -u root --connect-expired-password -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}'; FLUSH PRIVILEGES;"
+  ROOT_PASSWORD_SET=true
+else
+  # Case 2: Use temporary password from mysqld log (typical on RHEL-based distros)
+  TEMP_PASS=$(grep -oP 'temporary password.*: \K.*' /var/log/mysqld.log 2>/dev/null | tail -1 || true)
+  if [ -n "${TEMP_PASS}" ]; then
+    mysql -u root -p"${TEMP_PASS}" --connect-expired-password -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}'; FLUSH PRIVILEGES;" && ROOT_PASSWORD_SET=true || true
+  fi
+fi
+
+# Case 3: Re-run scenario – password may already be set
+if ! $ROOT_PASSWORD_SET; then
+  if mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "SELECT 1" >/dev/null 2>&1; then
+    print_info "MySQL root password already configured"
+    ROOT_PASSWORD_SET=true
+  fi
+fi
+
+if ! $ROOT_PASSWORD_SET; then
+  print_error "Failed to set MySQL root password automatically. Check /var/log/mysqld.log for the temporary password."
+  exit 1
+fi
+
+# Apply standard hardening with the configured root password
 mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "DELETE FROM mysql.user WHERE User='';"
 mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');"
 mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "DROP DATABASE IF EXISTS test;"
