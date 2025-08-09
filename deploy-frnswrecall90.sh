@@ -51,18 +51,18 @@ fi
 
 print_header
 
-# Generate secure passwords if not provided
-if [ -z "$MYSQL_ROOT_PASSWORD" ]; then
+# Generate secure passwords if not provided (use default expansion to avoid set -u errors)
+if [ -z "${MYSQL_ROOT_PASSWORD:-}" ]; then
     MYSQL_ROOT_PASSWORD=$(openssl rand -base64 32)
     print_info "Generated MySQL root password: $MYSQL_ROOT_PASSWORD"
 fi
 
-if [ -z "$DB_PASSWORD" ]; then
+if [ -z "${DB_PASSWORD:-}" ]; then
     DB_PASSWORD=$(openssl rand -base64 24)
     print_info "Generated database password: $DB_PASSWORD"
 fi
 
-if [ -z "$JWT_SECRET" ]; then
+if [ -z "${JWT_SECRET:-}" ]; then
     JWT_SECRET=$(openssl rand -base64 64)
     print_info "Generated JWT secret"
 fi
