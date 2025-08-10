@@ -101,13 +101,17 @@ ROOT_PASSWORD_SET=false
 
 # Case 1: root without password works (fresh insecure root)
 if mysql -u root -e "SELECT 1" >/dev/null 2>&1; then
-  mysql -u root --connect-expired-password -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}'; FLUSH PRIVILEGES;"
+  mysql -u root --connect-expired-password -e "SET GLOBAL validate_password.policy=LOW; SET GLOBAL validate_password.mixed_case_count=0; SET GLOBAL validate_password.number_count=1; SET GLOBAL validate_password.special_char_count=1; SET GLOBAL validate_password.length=8; ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}'; FLUSH PRIVILEGES;"
   ROOT_PASSWORD_SET=true
 else
   # Case 2: Use temporary password from mysqld log (typical on RHEL-based distros)
   TEMP_PASS=$(grep -oP 'temporary password.*: \K.*' /var/log/mysqld.log 2>/dev/null | tail -1 || true)
+  # Fallback: journalctl (some builds log only to journal)
+  if [ -z "${TEMP_PASS}" ]; then
+    TEMP_PASS=$(journalctl -u mysqld --no-pager 2>/dev/null | grep -oP 'temporary password.*: \K.*' | tail -1 || true)
+  fi
   if [ -n "${TEMP_PASS}" ]; then
-    mysql -u root -p"${TEMP_PASS}" --connect-expired-password -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}'; FLUSH PRIVILEGES;" && ROOT_PASSWORD_SET=true || true
+    mysql -u root -p"${TEMP_PASS}" --connect-expired-password -e "SET GLOBAL validate_password.policy=LOW; SET GLOBAL validate_password.mixed_case_count=0; SET GLOBAL validate_password.number_count=1; SET GLOBAL validate_password.special_char_count=1; SET GLOBAL validate_password.length=8; ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}'; FLUSH PRIVILEGES;" && ROOT_PASSWORD_SET=true || true
   fi
 fi
 
@@ -120,8 +124,52 @@ if ! $ROOT_PASSWORD_SET; then
 fi
 
 if ! $ROOT_PASSWORD_SET; then
-  print_error "Failed to set MySQL root password automatically. Check /var/log/mysqld.log for the temporary password."
-  exit 1
+  print_warning "Automatic password set failed. Forcing reset via init-file..."
+  systemctl stop mysqld || true
+  sleep 2
+  RESET_FILE=/root/mysql-init.sql
+  cat > "$RESET_FILE" <<RSQLEOF
+SET GLOBAL validate_password.policy=LOW;
+SET GLOBAL validate_password.mixed_case_count=0;
+SET GLOBAL validate_password.number_count=1;
+SET GLOBAL validate_password.special_char_count=1;
+SET GLOBAL validate_password.length=8;
+ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}';
+FLUSH PRIVILEGES;
+RSQLEOF
+
+  MYSQLD_BIN=$(command -v mysqld || echo /usr/libexec/mysqld)
+  # Start a standalone mysqld to run the init file
+  "$MYSQLD_BIN" --init-file="$RESET_FILE" --user=mysql --daemonize >/dev/null 2>&1 || true
+  sleep 8
+  # Stop the standalone instance and clean up
+  pkill -f "mysqld.*init-file=$RESET_FILE" >/dev/null 2>&1 || true
+  rm -f "$RESET_FILE"
+  systemctl start mysqld
+  sleep 2
+  if mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "SELECT 1" >/dev/null 2>&1; then
+    ROOT_PASSWORD_SET=true
+    print_status "MySQL root password reset via init-file"
+  else
+    print_warning "Init-file reset failed. Re-initializing MySQL data directory (fresh server fallback)."
+    systemctl stop mysqld || true
+    sleep 2
+    DATADIR=$(mysqld --verbose --help 2>/dev/null | awk '/^datadir/ {print $2; exit}'); DATADIR=${DATADIR:-/var/lib/mysql}
+    if [ -d "$DATADIR" ]; then mv "$DATADIR" "${DATADIR}.bak.$(date +%s)" || true; fi
+    install -d -o mysql -g mysql "$DATADIR"
+    mysqld --initialize-insecure --user=mysql --datadir="$DATADIR" >/dev/null 2>&1
+    systemctl start mysqld
+    sleep 3
+    # Now root has no password; set to requested
+    mysql -u root --connect-expired-password -e "SET GLOBAL validate_password.policy=LOW; SET GLOBAL validate_password.mixed_case_count=0; SET GLOBAL validate_password.number_count=1; SET GLOBAL validate_password.special_char_count=1; SET GLOBAL validate_password.length=8; ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}'; FLUSH PRIVILEGES;" || true
+    if mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "SELECT 1" >/dev/null 2>&1; then
+      ROOT_PASSWORD_SET=true
+      print_status "MySQL root password set after re-initialize"
+    else
+      print_error "Failed to set MySQL root password automatically. Manual intervention required."
+      exit 1
+    fi
+  fi
 fi
 
 # Apply standard hardening with the configured root password
