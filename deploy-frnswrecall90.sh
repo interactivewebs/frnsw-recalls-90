@@ -51,21 +51,16 @@ fi
 
 print_header
 
-# Generate secure passwords if not provided (use default expansion to avoid set -u errors)
-if [ -z "${MYSQL_ROOT_PASSWORD:-}" ]; then
-    MYSQL_ROOT_PASSWORD=$(openssl rand -base64 32)
-    print_info "Generated MySQL root password: $MYSQL_ROOT_PASSWORD"
-fi
+# Configure MySQL root password (explicit default as requested)
+# You can still override this by exporting MYSQL_ROOT_PASSWORD before running the script
+MYSQL_ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD:-frnsw5678!@#}"
+print_info "Using MySQL root password from configuration."
 
-if [ -z "${DB_PASSWORD:-}" ]; then
-    DB_PASSWORD=$(openssl rand -base64 24)
-    print_info "Generated database password: $DB_PASSWORD"
-fi
+DB_PASSWORD="${DB_PASSWORD:-$(openssl rand -base64 24)}"
+print_info "Using application DB user password (auto-generated unless provided)."
 
-if [ -z "${JWT_SECRET:-}" ]; then
-    JWT_SECRET=$(openssl rand -base64 64)
-    print_info "Generated JWT secret"
-fi
+JWT_SECRET="${JWT_SECRET:-$(openssl rand -base64 64)}"
+print_info "Using JWT secret (auto-generated unless provided)."
 
 # Update system
 print_info "Updating system packages..."
