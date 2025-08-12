@@ -103,7 +103,7 @@ ROOT_PASSWORD_SET=false
 
 # Case 1: root without password works (fresh insecure root)
 if mysql -u root -e "SELECT 1" >/dev/null 2>&1; then
-  mysql -u root --connect-expired-password -e "SET GLOBAL validate_password.policy=LOW; SET GLOBAL validate_password.mixed_case_count=0; SET GLOBAL validate_password.number_count=1; SET GLOBAL validate_password.special_char_count=1; SET GLOBAL validate_password.length=8; ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}'; FLUSH PRIVILEGES;"
+  mysql -u root --connect-expired-password -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}'; FLUSH PRIVILEGES;"
   ROOT_PASSWORD_SET=true
 else
   # Case 2: Use temporary password from mysqld log (typical on RHEL-based distros)
@@ -113,7 +113,7 @@ else
     TEMP_PASS=$(journalctl -u mysqld --no-pager 2>/dev/null | grep -oP 'temporary password.*: \K.*' | tail -1 || true)
   fi
   if [ -n "${TEMP_PASS}" ]; then
-    mysql -u root -p"${TEMP_PASS}" --connect-expired-password -e "SET GLOBAL validate_password.policy=LOW; SET GLOBAL validate_password.mixed_case_count=0; SET GLOBAL validate_password.number_count=1; SET GLOBAL validate_password.special_char_count=1; SET GLOBAL validate_password.length=8; ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}'; FLUSH PRIVILEGES;" && ROOT_PASSWORD_SET=true || true
+    mysql -u root -p"${TEMP_PASS}" --connect-expired-password -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}'; FLUSH PRIVILEGES;" && ROOT_PASSWORD_SET=true || true
   fi
 fi
 
@@ -131,11 +131,6 @@ if ! $ROOT_PASSWORD_SET; then
   sleep 2
   RESET_FILE=/root/mysql-init.sql
   cat > "$RESET_FILE" <<RSQLEOF
-SET GLOBAL validate_password.policy=LOW;
-SET GLOBAL validate_password.mixed_case_count=0;
-SET GLOBAL validate_password.number_count=1;
-SET GLOBAL validate_password.special_char_count=1;
-SET GLOBAL validate_password.length=8;
 ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}';
 FLUSH PRIVILEGES;
 RSQLEOF
@@ -178,7 +173,7 @@ RSQLEOF
     fi
     sleep 3
     # Now root has no password; set to requested
-    mysql -u root --connect-expired-password -e "SET GLOBAL validate_password.policy=LOW; SET GLOBAL validate_password.mixed_case_count=0; SET GLOBAL validate_password.number_count=1; SET GLOBAL validate_password.special_char_count=1; SET GLOBAL validate_password.length=8; ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}'; FLUSH PRIVILEGES;" || true
+    mysql -u root --connect-expired-password -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}'; FLUSH PRIVILEGES;" || true
     if mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "SELECT 1" >/dev/null 2>&1; then
       ROOT_PASSWORD_SET=true
       print_status "MySQL root password set after re-initialize"
