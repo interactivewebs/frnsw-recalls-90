@@ -504,6 +504,22 @@ firewall-cmd --permanent --add-service=https
 firewall-cmd --reload
 print_status "Firewall configured"
 
+# Attempt to setup SSL with Let's Encrypt (non-interactive). Safe to rerun.
+print_info "Setting up SSL certificate (Let's Encrypt)..."
+if certbot --nginx --non-interactive --agree-tos --email ${SSL_EMAIL} -d ${DOMAIN_NAME} >/dev/null 2>&1; then
+  print_status "SSL certificate installed via certbot"
+  # Update APP_URL to https in env and restart app to pick up change
+  if [ -f "/var/www/frnsw/backend/.env" ]; then
+    sed -i "s|^APP_URL=.*|APP_URL=https://${DOMAIN_NAME}|" /var/www/frnsw/backend/.env || true
+    print_status "APP_URL updated to https in /var/www/frnsw/backend/.env"
+    sudo -u frnsw pm2 restart frnsw-recalls-90 || sudo -u frnsw pm2 restart all || true
+    sudo -u frnsw pm2 save || true
+  fi
+  systemctl reload nginx || true
+else
+  print_warning "SSL setup skipped or failed. Site will remain on HTTP. You can rerun certbot manually later."
+fi
+
 # Save deployment credentials
 cat > /root/FRNSW_DEPLOYMENT_INFO.txt << EOF
 # FRNSW Recalls 90 - Deployment Credentials
@@ -523,9 +539,9 @@ PM2 Logs: sudo -u frnsw pm2 logs
 
 Next Steps:
 1. Visit: http://${DOMAIN_NAME}
-2. Upload complete application files
+2. Upload complete application files (if not using repo)
 3. Configure email in .env file
-4. Setup SSL: certbot --nginx -d ${DOMAIN_NAME}
+4. SSL: Already attempted automatically. If needed, re-run: certbot --nginx -d ${DOMAIN_NAME}
 EOF
 
 chmod 600 /root/FRNSW_DEPLOYMENT_INFO.txt
@@ -540,11 +556,20 @@ else
     print_warning "Backend health check: ❌ FAILED"
 fi
 
-# Test nginx proxy
+# Test nginx proxy (HTTP)
 if curl -f -s http://localhost/health > /dev/null; then
-    print_status "Nginx proxy check: ✅ PASSED"
+    print_status "Nginx proxy check (HTTP): ✅ PASSED"
 else
-    print_warning "Nginx proxy check: ❌ FAILED"
+    print_warning "Nginx proxy check (HTTP): ❌ FAILED"
+fi
+
+# Test HTTPS if certificate installed
+if [ -f "/etc/letsencrypt/live/${DOMAIN_NAME}/fullchain.pem" ]; then
+  if curl -f -s https://localhost/health > /dev/null; then
+      print_status "Nginx proxy check (HTTPS): ✅ PASSED"
+  else
+      print_warning "Nginx proxy check (HTTPS): ❌ FAILED"
+  fi
 fi
 
 # Check PM2 status
@@ -573,10 +598,17 @@ print_status "🎉 FRNSW Recalls 90 server deployment completed!"
 echo
 print_info "🌐 Your application should be live at:"
 echo "    http://${DOMAIN_NAME}"
+if [ -f "/etc/letsencrypt/live/${DOMAIN_NAME}/fullchain.pem" ]; then
+  echo "    https://${DOMAIN_NAME}"
+fi
 echo
 print_info "🔍 Test these URLs:"
 echo "    http://${DOMAIN_NAME}/health"
 echo "    http://${DOMAIN_NAME}/api/status"
+if [ -f "/etc/letsencrypt/live/${DOMAIN_NAME}/fullchain.pem" ]; then
+  echo "    https://${DOMAIN_NAME}/health"
+  echo "    https://${DOMAIN_NAME}/api/status"
+fi
 echo
 print_info "📋 Deployment information saved to:"
 echo "    /root/FRNSW_DEPLOYMENT_INFO.txt"
