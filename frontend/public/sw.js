@@ -1,17 +1,15 @@
 // FRNSW Recalls 90 Service Worker
 // Handles caching, offline functionality, and push notifications
 
-const CACHE_NAME = 'frnsw-recalls-90-v1.0.0';
-const API_CACHE_NAME = 'frnsw-recalls-90-api-v1.0.0';
+const CACHE_NAME = 'frnsw-recalls-90-v1.1.0';
+const API_CACHE_NAME = 'frnsw-recalls-90-api-v1.1.0';
 
 // Files to cache immediately
 const STATIC_CACHE_URLS = [
-  '/FRNSWRecalls90/',
-  '/FRNSWRecalls90/static/js/bundle.js',
-  '/FRNSWRecalls90/static/css/main.css',
-  '/FRNSWRecalls90/manifest.json',
-  '/FRNSWRecalls90/icons/icon-192x192.png',
-  '/FRNSWRecalls90/icons/icon-512x512.png',
+  '/',
+  '/manifest.json',
+  '/icons/icon-192x192.png',
+  '/icons/icon-512x512.png',
   'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap'
 ];
 
@@ -171,7 +169,7 @@ async function handleNavigationRequest(request) {
   } catch (error) {
     // If network fails, serve the cached app shell
     const cache = await caches.open(CACHE_NAME);
-    const cachedResponse = await cache.match('/FRNSWRecalls90/');
+  const cachedResponse = await cache.match('/');
     
     if (cachedResponse) {
       console.log('Service Worker: Serving offline app shell');
@@ -197,8 +195,8 @@ self.addEventListener('push', event => {
     
     const options = {
       body: data.body,
-      icon: data.icon || '/FRNSWRecalls90/icons/icon-192x192.png',
-      badge: data.badge || '/FRNSWRecalls90/icons/badge-72x72.png',
+      icon: data.icon || '/icons/icon-192x192.png',
+      badge: data.badge || '/icons/badge-72x72.png',
       tag: data.tag || 'frnsw-recall',
       renotify: true,
       requireInteraction: true,
@@ -247,7 +245,7 @@ self.addEventListener('notificationclick', event => {
       clients.matchAll().then(clientList => {
         // Check if app is already open
         for (const client of clientList) {
-          if (client.url.includes('/FRNSWRecalls90') && 'focus' in client) {
+          if (client.url.includes('/') && 'focus' in client) {
             return client.focus();
           }
         }
@@ -255,8 +253,8 @@ self.addEventListener('notificationclick', event => {
         // Open new window if app is not open
         if (clients.openWindow) {
           const targetUrl = data.recallId 
-            ? `/FRNSWRecalls90/recalls/${data.recallId}`
-            : '/FRNSWRecalls90/recalls';
+            ? `/recalls/${data.recallId}`
+            : '/recalls';
           return clients.openWindow(targetUrl);
         }
       })
@@ -292,8 +290,8 @@ async function handleRecallResponse(response, data) {
         '✅ Response Recorded',
         {
           body: `Your response "${response === 'available' ? 'Available' : 'Not Available'}" has been recorded.`,
-          icon: '/FRNSWRecalls90/icons/icon-192x192.png',
-          badge: '/FRNSWRecalls90/icons/badge-72x72.png',
+          icon: '/icons/icon-192x192.png',
+          badge: '/icons/badge-72x72.png',
           tag: 'response-success',
           requireInteraction: false,
           silent: true
