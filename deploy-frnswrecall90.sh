@@ -273,6 +273,9 @@ if [ -f "$APP_SRC/ecosystem.config.js" ]; then
   cp -f "$APP_SRC/ecosystem.config.js" /var/www/frnsw/ecosystem.config.js
 fi
 
+# Ensure application files are owned by the app user before installing deps
+chown -R frnsw:frnsw /var/www/frnsw
+
 # Create environment file
 print_info "Creating environment configuration..."
 cat > /var/www/frnsw/backend/.env << EOF
@@ -330,7 +333,13 @@ module.exports = {
 EOF
 
 print_info "Building frontend from repository..."
-sudo -u frnsw bash -lc 'cd /var/www/frnsw/frontend && (npm ci || npm install) && npm run build'
+print_info "Building frontend from repository..."
+if sudo -u frnsw bash -lc 'cd /var/www/frnsw/frontend && (npm ci || npm install) && npm run build'; then
+  print_status "Frontend build completed"
+else
+  print_error "Frontend build failed"
+  exit 1
+fi
 
 # Set proper ownership
 chown -R frnsw:frnsw /var/www/frnsw
