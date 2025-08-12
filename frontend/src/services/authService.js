@@ -3,7 +3,7 @@ import axios from 'axios';
 // Create axios instance with base configuration
 const apiClient = axios.create({
   baseURL: process.env.NODE_ENV === 'production' 
-    ? 'https://interactivewebs.com/api'
+    ? '/api'
     : 'http://localhost:3001/api',
   timeout: 30000,
   headers: {

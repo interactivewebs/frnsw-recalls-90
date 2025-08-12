@@ -24,7 +24,8 @@ export const SocketProvider = ({ children }) => {
   // Get socket server URL
   const getSocketUrl = () => {
     if (process.env.NODE_ENV === 'production') {
-      return 'https://interactivewebs.com';
+      // Same origin as the site; Nginx proxies /socket.io to backend
+      return window.location.origin;
     }
     return 'http://localhost:3001';
   };

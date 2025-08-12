@@ -56,7 +56,7 @@ function App() {
   }
 
   return (
-    <Router basename="/FRNSWRecalls90">
+    <Router>
       <div className="App min-h-screen bg-gray-50">
         <OfflineIndicator />
         <InstallPrompt />
