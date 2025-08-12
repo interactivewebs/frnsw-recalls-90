@@ -56,11 +56,13 @@ print_header
 MYSQL_ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD:-frnsw5678!@#}"
 print_info "Using MySQL root password from configuration."
 
-DB_PASSWORD="${DB_PASSWORD:-$(openssl rand -base64 24)}"
-print_info "Using application DB user password (auto-generated unless provided)."
+# Use same password for the application DB user by default
+DB_PASSWORD="${DB_PASSWORD:-$MYSQL_ROOT_PASSWORD}"
+print_info "Using application DB user password (same as MySQL root by default)."
 
-JWT_SECRET="${JWT_SECRET:-$(openssl rand -base64 64)}"
-print_info "Using JWT secret (auto-generated unless provided)."
+# Set a fixed default JWT secret (can still be overridden via JWT_SECRET env var)
+JWT_SECRET="${JWT_SECRET:-b1t2y3J4K5m6Q7R8s9T0uV1wX2yZ3a4B5c6D7e8F9g0H1i2J3k4L5m6N7o8P9}"
+print_info "Using JWT secret from configuration."
 
 # Update system
 print_info "Updating system packages..."
@@ -154,8 +156,13 @@ RSQLEOF
     print_warning "Init-file reset failed. Re-initializing MySQL data directory (fresh server fallback)."
     systemctl stop mysqld || true
     sleep 2
-    DATADIR=$(mysqld --verbose --help 2>/dev/null | awk '/^datadir/ {print $2; exit}'); DATADIR=${DATADIR:-/var/lib/mysql}
-    if [ -d "$DATADIR" ]; then mv "$DATADIR" "${DATADIR}.bak.$(date +%s)" || true; fi
+    # Determine MySQL data directory and normalize by removing any trailing slash
+    DATADIR=$(mysqld --verbose --help 2>/dev/null | awk '/^datadir/ {print $2; exit}')
+    DATADIR=${DATADIR:-/var/lib/mysql}
+    DATADIR=${DATADIR%/}
+    BACKUP_DIR="${DATADIR}.bak.$(date +%s)"
+    # Move datadir out of the way (not into itself)
+    if [ -d "$DATADIR" ]; then mv "$DATADIR" "$BACKUP_DIR" || true; fi
     install -d -o mysql -g mysql "$DATADIR"
     mysqld --initialize-insecure --user=mysql --datadir="$DATADIR" >/dev/null 2>&1
     systemctl start mysqld
