@@ -164,8 +164,18 @@ RSQLEOF
     # Move datadir out of the way (not into itself)
     if [ -d "$DATADIR" ]; then mv "$DATADIR" "$BACKUP_DIR" || true; fi
     install -d -o mysql -g mysql "$DATADIR"
+    # Ensure proper permissions and SELinux context
+    chown -R mysql:mysql "$DATADIR"
+    chmod 700 "$DATADIR"
+    restorecon -Rv "$DATADIR" >/dev/null 2>&1 || true
+    # Initialize database
     mysqld --initialize-insecure --user=mysql --datadir="$DATADIR" >/dev/null 2>&1
-    systemctl start mysqld
+    # Start MySQL and check status
+    if ! systemctl start mysqld; then
+      print_error "mysqld failed to start after re-initialize. Showing last log lines:"
+      (journalctl -u mysqld --no-pager -n 200 2>/dev/null || tail -n 200 /var/log/mysqld.log 2>/dev/null || true)
+      exit 1
+    fi
     sleep 3
     # Now root has no password; set to requested
     mysql -u root --connect-expired-password -e "SET GLOBAL validate_password.policy=LOW; SET GLOBAL validate_password.mixed_case_count=0; SET GLOBAL validate_password.number_count=1; SET GLOBAL validate_password.special_char_count=1; SET GLOBAL validate_password.length=8; ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}'; FLUSH PRIVILEGES;" || true
