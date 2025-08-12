@@ -5,12 +5,14 @@ require('dotenv').config();
 // Create SMTP transporter
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
-  port: process.env.SMTP_PORT || 587,
-  secure: false, // Use TLS
-  auth: {
+  port: Number(process.env.SMTP_PORT || 25),
+  secure: false,
+  ignoreTLS: true,
+  tls: { rejectUnauthorized: false },
+  auth: process.env.SMTP_USER && process.env.SMTP_PASS ? {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS
-  }
+  } : undefined
 });
 
 // Generate secure token for recall responses

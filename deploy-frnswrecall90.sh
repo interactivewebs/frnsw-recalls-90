@@ -293,12 +293,12 @@ APP_URL=http://${DOMAIN_NAME}
 PORT=3001
 NODE_ENV=production
 
-# Email Configuration (configure with your SMTP details)
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=your-email@fire.nsw.gov.au
-SMTP_PASS=your-app-password
-FROM_EMAIL=noreply@fire.nsw.gov.au
+# Email Configuration (defaults set for InteractiveWebs relay)
+SMTP_HOST=${SMTP_HOST:-mail.interactivewebs.com}
+SMTP_PORT=${SMTP_PORT:-25}
+SMTP_USER=${SMTP_USER:-}
+SMTP_PASS=${SMTP_PASS:-}
+FROM_EMAIL=${FROM_EMAIL:-frnsw_NO_REPLY@interactivewebs.com}
 
 # Security
 BCRYPT_ROUNDS=12
@@ -621,9 +621,7 @@ echo "    systemctl status nginx      # Check nginx"
 echo "    curl http://localhost:3001/health  # Test backend directly"
 echo
 print_warning "📝 Next steps:"
-echo "    1. Upload your complete application files"
-echo "    2. Configure email settings in /var/www/frnsw/backend/.env"
-echo "    3. Setup SSL certificate: certbot --nginx -d ${DOMAIN_NAME}"
-echo "    4. Test all functionality"
+echo "    1. Verify email settings in /var/www/frnsw/backend/.env"
+echo "    2. Test all functionality"
 echo
 print_status "Deployment completed successfully!"
