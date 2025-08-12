@@ -159,16 +159,18 @@
         }, 1000);
       });
       
-      // Register service worker
+      // Unregister old service workers and clear old caches to avoid stale assets
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', function() {
-          navigator.serviceWorker.register('%PUBLIC_URL%/sw.js')
-            .then(function(registration) {
-              console.log('SW registered: ', registration);
-            })
-            .catch(function(registrationError) {
-              console.log('SW registration failed: ', registrationError);
-            });
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          for (const reg of registrations) { reg.unregister(); }
+        }).finally(function() {
+          caches && caches.keys && caches.keys().then(function(keys){ keys.forEach(k=>caches.delete(k)); });
+          // Register the current service worker
+          window.addEventListener('load', function() {
+            navigator.serviceWorker.register('%PUBLIC_URL%/sw.js')
+              .then(function(registration) { console.log('SW registered: ', registration); })
+              .catch(function(err) { console.log('SW registration failed: ', err); });
+          });
         });
       }
       
