@@ -12,12 +12,13 @@ const { testConnection, initializeDatabase } = require('./config/database');
 const { verifyToken } = require('./middleware/auth');
 // const { startCronJobs } = require('./scripts/cronJobs');
 
-// Import routes
+// Import routes (tolerate missing route files during initial bootstrap)
 const authRoutes = require('./routes/auth');
-const recallRoutes = require('./routes/recalls');
-const adminRoutes = require('./routes/admin');
-const reportsRoutes = require('./routes/reports');
-// const pushRoutes = require('./routes/push');
+const safeRequire = (p) => { try { return require(p); } catch (e) { console.warn(`Route not found, skipping: ${p}`); return null; } };
+const recallRoutes = safeRequire('./routes/recalls');
+const adminRoutes = safeRequire('./routes/admin');
+const reportsRoutes = safeRequire('./routes/reports');
+// const pushRoutes = safeRequire('./routes/push');
 
 const app = express();
 const server = http.createServer(app);
@@ -88,11 +89,20 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Basic API status endpoint for monitoring
+app.get('/api/status', (req, res) => {
+  res.json({ 
+    status: 'OK',
+    message: 'FRNSW Recalls 90 API is running',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // API Routes
 app.use('/api/auth', authLimiter, authRoutes);
-app.use('/api/recalls', recallRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/reports', reportsRoutes);
+if (recallRoutes) app.use('/api/recalls', recallRoutes);
+if (adminRoutes) app.use('/api/admin', adminRoutes);
+if (reportsRoutes) app.use('/api/reports', reportsRoutes);
 // app.use('/api/push', pushRoutes);
 
 // Serve static files from React build (production)
