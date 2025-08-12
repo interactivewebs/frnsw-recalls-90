@@ -144,7 +144,7 @@
     
     <div id="root"></div>
     
-    <!-- Service worker registration -->
+    <!-- Minimal boot script (no service worker) -->
     <script>
       // Remove loading screen when app loads
       window.addEventListener('load', function() {
@@ -152,28 +152,15 @@
           const loadingScreen = document.getElementById('loading-screen');
           if (loadingScreen) {
             loadingScreen.classList.add('fade-out');
-            setTimeout(function() {
-              loadingScreen.remove();
-            }, 500);
+            setTimeout(function() { loadingScreen.remove(); }, 500);
           }
-        }, 1000);
+        }, 500);
       });
-      
-      // Unregister old service workers and clear old caches to avoid stale assets
+      // Ensure any previously-registered service workers are removed
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function(registrations) {
-          for (const reg of registrations) { reg.unregister(); }
-        }).finally(function() {
-          caches && caches.keys && caches.keys().then(function(keys){ keys.forEach(k=>caches.delete(k)); });
-          // Register the current service worker
-          window.addEventListener('load', function() {
-            navigator.serviceWorker.register('%PUBLIC_URL%/sw.js')
-              .then(function(registration) { console.log('SW registered: ', registration); })
-              .catch(function(err) { console.log('SW registration failed: ', err); });
-          });
-        });
+        navigator.serviceWorker.getRegistrations().then(function(regs){ regs.forEach(r=>r.unregister()); });
+        if (window.caches && window.caches.keys) { caches.keys().then(keys => keys.forEach(k=>caches.delete(k))); }
       }
-      
       // Handle PWA install prompt
       let deferredPrompt;
       
@@ -207,7 +194,6 @@
         }
       }
       
-      // Make install function globally available
       window.installApp = installApp;
     </script>
   </body>
