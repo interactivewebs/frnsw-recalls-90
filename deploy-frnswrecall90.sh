@@ -360,37 +360,35 @@ fi
 
 # Import database schema from repository if present
 if [ -f "/var/www/frnsw/database/schema.sql" ]; then
-  print_info "Importing database schema from repository..."
-  mysql -u frnsw_user -p"${DB_PASSWORD}" frnsw_recalls_90 < /var/www/frnsw/database/schema.sql
-  print_status "Database schema imported"
+  print_info "Importing database schema from repository (idempotent)..."
+  if mysql -f -u frnsw_user -p"${DB_PASSWORD}" frnsw_recalls_90 < /var/www/frnsw/database/schema.sql; then
+    print_status "Database schema imported"
+  else
+    print_warning "Schema import encountered errors (likely existing objects). Continuing."
+  fi
 else
   print_warning "No schema.sql found in repository; skipping schema import"
 fi
 
-# Start application with PM2
+# Start or restart application with PM2 (idempotent)
 print_info "Starting application with PM2..."
 cd /var/www/frnsw
-
-# Start PM2 with error checking
-if sudo -u frnsw pm2 start ecosystem.config.js --env production; then
-    sudo -u frnsw pm2 save
-    # Setup PM2 to start on boot for user 'frnsw'
-    pm2 startup systemd -u frnsw --hp /var/www/frnsw >/dev/null 2>&1 || true
-    print_status "Application started with PM2"
-    
-    # Wait a moment and check if app is actually running
-    sleep 3
-    if sudo -u frnsw pm2 list | grep -q "online"; then
-        print_status "Application is running successfully"
-    else
-        print_warning "Application may not be running properly"
-        sudo -u frnsw pm2 logs --lines 10
-    fi
+if sudo -u frnsw pm2 describe frnsw-recalls-90 >/dev/null 2>&1; then
+  print_info "PM2 app exists, restarting..."
+  sudo -u frnsw pm2 restart frnsw-recalls-90
 else
-    print_error "Failed to start application with PM2"
-    print_info "Checking PM2 logs..."
-    sudo -u frnsw pm2 logs --lines 10
-    exit 1
+  print_info "PM2 app not found, starting new instance..."
+  sudo -u frnsw pm2 start ecosystem.config.js --env production
+fi
+sudo -u frnsw pm2 save || true
+# Ensure PM2 boots with system
+pm2 startup systemd -u frnsw --hp /var/www/frnsw >/dev/null 2>&1 || true
+sleep 3
+if sudo -u frnsw pm2 list | grep -q "online"; then
+  print_status "Application is running successfully"
+else
+  print_warning "Application may not be running properly"
+  sudo -u frnsw pm2 logs --lines 20 || true
 fi
 
 # Configure Nginx
