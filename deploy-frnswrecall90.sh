@@ -333,13 +333,29 @@ module.exports = {
 EOF
 
 print_info "Building frontend from repository..."
-print_info "Building frontend from repository..."
 if sudo -u frnsw bash -lc 'cd /var/www/frnsw/frontend && (npm ci || npm install) && npm run build'; then
   print_status "Frontend build completed"
+  
+  # Verify build directory exists and has content
+  if [ -d "/var/www/frnsw/frontend/build" ] && [ -f "/var/www/frnsw/frontend/build/index.html" ]; then
+    print_status "Frontend build verified - index.html found"
+    print_info "Build directory contents:"
+    ls -la /var/www/frnsw/frontend/build/ | head -10
+  else
+    print_error "Frontend build directory missing or incomplete"
+    print_info "Current frontend directory contents:"
+    ls -la /var/www/frnsw/frontend/
+    exit 1
+  fi
 else
   print_error "Frontend build failed"
   exit 1
 fi
+
+# Clean up any incorrectly placed build files from root directory
+print_info "Cleaning up any misplaced build files..."
+find /var/www/frnsw -maxdepth 1 -name "*.js" -o -name "*.css" -o -name "*.js.map" -o -name "*.css.map" | grep -v "ecosystem.config.js" | xargs rm -f 2>/dev/null || true
+print_info "Cleanup completed"
 
 # Set proper ownership
 chown -R frnsw:frnsw /var/www/frnsw
