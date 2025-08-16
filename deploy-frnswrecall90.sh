@@ -405,6 +405,13 @@ print_info "Cleanup completed"
 # Set proper ownership
 chown -R frnsw:frnsw /var/www/frnsw
 
+# Ensure SELinux contexts allow nginx to read static assets (AlmaLinux/RHEL)
+if command -v getenforce >/dev/null 2>&1 && [ "$(getenforce)" != "Disabled" ]; then
+  print_info "Setting SELinux context for web content..."
+  chcon -R -t httpd_sys_content_t /var/www/frnsw/frontend 2>/dev/null || true
+  restorecon -Rv /var/www/frnsw/frontend >/dev/null 2>&1 || true
+fi
+
 print_info "Installing backend dependencies from repository..."
 cd /var/www/frnsw/backend
 if sudo -u frnsw npm ci --omit=dev; then
@@ -475,16 +482,20 @@ server {
     add_header X-Content-Type-Options nosniff;
     add_header X-XSS-Protection "1; mode=block";
     
-    # Serve static files
+    # Serve frontend (SPA)
+    root /var/www/frnsw/frontend/build;
+    index index.html;
+
+    # Primary route: static files or SPA index.html
     location / {
-        root /var/www/frnsw/frontend/build;
-        try_files \$uri \$uri/ @backend;
-        
-        # Cache static assets
-        location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
-            expires 1y;
-            add_header Cache-Control "public, immutable";
-        }
+        try_files \$uri \$uri/ /index.html;
+    }
+
+    # Cache headers for static assets
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
+        try_files \$uri =404;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
     }
     
     # Fallback to backend for API and dynamic routes
