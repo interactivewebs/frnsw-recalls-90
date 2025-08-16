@@ -341,6 +341,19 @@ if sudo -u frnsw bash -lc 'cd /var/www/frnsw/frontend && (npm ci || npm install)
     print_status "Frontend build verified - index.html found"
     print_info "Build directory contents:"
     ls -la /var/www/frnsw/frontend/build/ | head -10
+    
+    # Check if static files are in the right place
+    if [ -d "/var/www/frnsw/frontend/build/static" ]; then
+      print_status "Static directory found in correct location"
+      print_info "Static JS files:"
+      ls -la /var/www/frnsw/frontend/build/static/js/ 2>/dev/null | head -5 || echo "No JS files in static/js/"
+      print_info "Static CSS files:"
+      ls -la /var/www/frnsw/frontend/build/static/css/ 2>/dev/null | head -5 || echo "No CSS files in static/css/"
+    else
+      print_error "Static directory missing from build output"
+      print_info "Build directory structure:"
+      find /var/www/frnsw/frontend/build -type d | head -10
+    fi
   else
     print_error "Frontend build directory missing or incomplete"
     print_info "Current frontend directory contents:"
@@ -355,6 +368,9 @@ fi
 # Clean up any incorrectly placed build files from root directory
 print_info "Cleaning up any misplaced build files..."
 find /var/www/frnsw -maxdepth 1 -name "*.js" -o -name "*.css" -o -name "*.js.map" -o -name "*.css.map" | grep -v "ecosystem.config.js" | xargs rm -f 2>/dev/null || true
+
+# Also clean up any static files that might be in wrong locations
+find /var/www/frnsw -maxdepth 1 -name "static" -type d | xargs rm -rf 2>/dev/null || true
 print_info "Cleanup completed"
 
 # Set proper ownership
