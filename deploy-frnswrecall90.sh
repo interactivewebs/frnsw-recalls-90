@@ -412,6 +412,10 @@ if command -v getenforce >/dev/null 2>&1 && [ "$(getenforce)" != "Disabled" ]; t
   restorecon -Rv /var/www/frnsw/frontend >/dev/null 2>&1 || true
 fi
 
+# Ensure permissive file permissions for web content
+find /var/www/frnsw/frontend -type d -exec chmod 755 {} \; 2>/dev/null || true
+find /var/www/frnsw/frontend -type f -exec chmod 644 {} \; 2>/dev/null || true
+
 print_info "Installing backend dependencies from repository..."
 cd /var/www/frnsw/backend
 if sudo -u frnsw npm ci --omit=dev; then
@@ -497,6 +501,20 @@ server {
         expires 1y;
         add_header Cache-Control "public, immutable";
     }
+
+    # Explicit aliases for common asset paths to avoid path/base issues
+    location /static/ {
+        alias /var/www/frnsw/frontend/build/static/;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+    location /icons/ {
+        alias /var/www/frnsw/frontend/build/icons/;
+        expires 30d;
+    }
+    location = /favicon.ico { alias /var/www/frnsw/frontend/build/favicon.ico; }
+    location = /manifest.json { alias /var/www/frnsw/frontend/build/manifest.json; }
+    location = /asset-manifest.json { alias /var/www/frnsw/frontend/build/asset-manifest.json; }
     
     # Fallback to backend for API and dynamic routes
     location @backend {
