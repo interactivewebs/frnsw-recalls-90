@@ -335,9 +335,23 @@ EOF
 print_info "Building frontend from repository..."
 # Ensure we're in the correct directory and clean any previous builds
 cd /var/www/frnsw/frontend
-rm -rf build node_modules package-lock.json
+rm -rf build node_modules
 
-if sudo -u frnsw bash -lc 'cd /var/www/frnsw/frontend && (npm ci || npm install) && npm run build'; then
+# Check if package-lock.json exists, if not use npm install instead of npm ci
+if [ -f "package-lock.json" ]; then
+  print_info "package-lock.json found, using npm ci for clean install"
+  BUILD_CMD="npm ci"
+else
+  print_warning "No package-lock.json found, using npm install instead"
+  BUILD_CMD="npm install"
+fi
+
+if sudo -u frnsw bash -lc "cd /var/www/frnsw/frontend && $BUILD_CMD && npm run build"; then
+  # Generate package-lock.json if it doesn't exist for future deployments
+  if [ ! -f "package-lock.json" ]; then
+    print_info "Generating package-lock.json for future deployments..."
+    sudo -u frnsw npm install --package-lock-only 2>/dev/null || true
+  fi
   print_status "Frontend build completed"
   
   # Verify build directory exists and has content
