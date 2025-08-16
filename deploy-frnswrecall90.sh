@@ -333,6 +333,10 @@ module.exports = {
 EOF
 
 print_info "Building frontend from repository..."
+# Ensure we're in the correct directory and clean any previous builds
+cd /var/www/frnsw/frontend
+rm -rf build node_modules package-lock.json
+
 if sudo -u frnsw bash -lc 'cd /var/www/frnsw/frontend && (npm ci || npm install) && npm run build'; then
   print_status "Frontend build completed"
   
@@ -342,18 +346,29 @@ if sudo -u frnsw bash -lc 'cd /var/www/frnsw/frontend && (npm ci || npm install)
     print_info "Build directory contents:"
     ls -la /var/www/frnsw/frontend/build/ | head -10
     
-    # Check if static files are in the right place
-    if [ -d "/var/www/frnsw/frontend/build/static" ]; then
-      print_status "Static directory found in correct location"
-      print_info "Static JS files:"
-      ls -la /var/www/frnsw/frontend/build/static/js/ 2>/dev/null | head -5 || echo "No JS files in static/js/"
-      print_info "Static CSS files:"
-      ls -la /var/www/frnsw/frontend/build/static/css/ 2>/dev/null | head -5 || echo "No CSS files in static/css/"
-    else
-      print_error "Static directory missing from build output"
-      print_info "Build directory structure:"
-      find /var/www/frnsw/frontend/build -type d | head -10
+      # Check if static files are in the right place
+  if [ -d "/var/www/frnsw/frontend/build/static" ]; then
+    print_status "Static directory found in correct location"
+    print_info "Static JS files:"
+    ls -la /var/www/frnsw/frontend/build/static/js/ 2>/dev/null | head -5 || echo "No JS files in static/js/"
+    print_info "Static CSS files:"
+    ls -la /var/www/frnsw/frontend/build/static/css/ 2>/dev/null | head -5 || echo "No CSS files in static/css/"
+  else
+    print_error "Static directory missing from build output"
+    print_info "Build directory structure:"
+    find /var/www/frnsw/frontend/build -type d | head -10
+    
+    # Check if files are in wrong location
+    print_info "Checking for files in wrong locations..."
+    if [ -d "/var/www/frnsw/static" ]; then
+      print_warning "Found static directory in root - this is wrong!"
+      ls -la /var/www/frnsw/static/ | head -5
     fi
+    if ls /var/www/frnsw/*.js 2>/dev/null | grep -q "main"; then
+      print_warning "Found JS files in root - this is wrong!"
+      ls -la /var/www/frnsw/*.js | head -3
+    fi
+  fi
   else
     print_error "Frontend build directory missing or incomplete"
     print_info "Current frontend directory contents:"
