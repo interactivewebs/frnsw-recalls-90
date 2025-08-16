@@ -413,8 +413,16 @@ if command -v getenforce >/dev/null 2>&1 && [ "$(getenforce)" != "Disabled" ]; t
 fi
 
 # Ensure permissive file permissions for web content
+chmod 755 /var/www || true
+chmod 755 /var/www/frnsw || true
 find /var/www/frnsw/frontend -type d -exec chmod 755 {} \; 2>/dev/null || true
 find /var/www/frnsw/frontend -type f -exec chmod 644 {} \; 2>/dev/null || true
+
+# Also ensure nginx user can traverse parent dirs even if umask changed
+if id nginx >/dev/null 2>&1; then
+  usermod -a -G frnsw nginx || true
+  chmod 755 /var/www /var/www/frnsw 2>/dev/null || true
+fi
 
 print_info "Installing backend dependencies from repository..."
 cd /var/www/frnsw/backend
@@ -422,12 +430,12 @@ if sudo -u frnsw npm ci --omit=dev; then
   print_status "Backend dependencies installed"
 else
   print_warning "npm ci failed; falling back to npm install --production"
-  if sudo -u frnsw npm install --production; then
+if sudo -u frnsw npm install --production; then
     print_status "Backend dependencies installed"
-  else
+else
     print_error "Failed to install backend dependencies"
-    exit 1
-  fi
+        exit 1
+    fi
 fi
 
 # Import database schema from repository if present
@@ -454,12 +462,12 @@ else
 fi
 sudo -u frnsw pm2 save || true
 # Ensure PM2 boots with system
-pm2 startup systemd -u frnsw --hp /var/www/frnsw >/dev/null 2>&1 || true
-sleep 3
-if sudo -u frnsw pm2 list | grep -q "online"; then
-  print_status "Application is running successfully"
-else
-  print_warning "Application may not be running properly"
+    pm2 startup systemd -u frnsw --hp /var/www/frnsw >/dev/null 2>&1 || true
+    sleep 3
+    if sudo -u frnsw pm2 list | grep -q "online"; then
+        print_status "Application is running successfully"
+    else
+        print_warning "Application may not be running properly"
   sudo -u frnsw pm2 logs --lines 20 || true
 fi
 
@@ -494,9 +502,9 @@ server {
     location / {
         try_files \$uri \$uri/ /index.html;
     }
-
+        
     # Cache headers for static assets
-    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
+        location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
         try_files \$uri =404;
         expires 1y;
         add_header Cache-Control "public, immutable";
@@ -505,9 +513,9 @@ server {
     # Explicit aliases for common asset paths to avoid path/base issues
     location /static/ {
         alias /var/www/frnsw/frontend/build/static/;
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-    }
+            expires 1y;
+            add_header Cache-Control "public, immutable";
+        }
     location /icons/ {
         alias /var/www/frnsw/frontend/build/icons/;
         expires 30d;
