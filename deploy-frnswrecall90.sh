@@ -440,14 +440,64 @@ fi
 
 # Import database schema from repository if present
 if [ -f "/var/www/frnsw/database/schema.sql" ]; then
-  print_info "Importing database schema from repository (idempotent)..."
-  if mysql -f -u frnsw_user -p"${DB_PASSWORD}" frnsw_recalls_90 < /var/www/frnsw/database/schema.sql; then
-    print_status "Database schema imported"
+  print_info "Importing database schema from repository..."
+  
+  # Test database connection first
+  print_info "Testing database connection..."
+  if mysql -u frnsw_user -p"${DB_PASSWORD}" -e "SELECT 1;" 2>/dev/null; then
+    print_status "Database connection successful"
   else
-    print_warning "Schema import encountered errors (likely existing objects). Continuing."
+    print_error "Cannot connect to database with frnsw_user - checking root connection..."
+    if mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "SELECT 1;" 2>/dev/null; then
+      print_status "Root connection successful, ensuring database and user exist..."
+      mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "
+        CREATE DATABASE IF NOT EXISTS frnsw_recalls_90;
+        CREATE USER IF NOT EXISTS 'frnsw_user'@'localhost' IDENTIFIED BY '${DB_PASSWORD}';
+        GRANT ALL PRIVILEGES ON frnsw_recalls_90.* TO 'frnsw_user'@'localhost';
+        FLUSH PRIVILEGES;" 2>/dev/null || true
+      print_status "Database and user setup completed"
+    else
+      print_error "Cannot connect to MySQL at all - check if MySQL is running"
+      exit 1
+    fi
+  fi
+  
+  # Import schema with better error handling
+  if mysql -f -u frnsw_user -p"${DB_PASSWORD}" frnsw_recalls_90 < /var/www/frnsw/database/schema.sql 2>/dev/null; then
+    print_status "Database schema imported successfully"
+    
+    # Verify key tables exist
+    if mysql -u frnsw_user -p"${DB_PASSWORD}" frnsw_recalls_90 -e "SHOW TABLES;" 2>/dev/null | grep -q "users"; then
+      print_status "Database tables verified - users table exists"
+      
+      # Check if we need to seed initial data
+      USER_COUNT=$(mysql -u frnsw_user -p"${DB_PASSWORD}" frnsw_recalls_90 -e "SELECT COUNT(*) as count FROM users;" 2>/dev/null | tail -1)
+      if [ "$USER_COUNT" = "0" ]; then
+        print_info "No users found, creating initial admin user..."
+        
+        # Create initial admin user with proper password hash
+        mysql -u frnsw_user -p"${DB_PASSWORD}" frnsw_recalls_90 -e "
+          INSERT INTO users (staff_number, first_name, last_name, email, password_hash, is_admin, is_host_admin, email_verified) 
+          VALUES (1001, 'David', 'Finley', 'david.finley@fire.nsw.gov.au', 
+                  '\$2b\$04\$UOgf743mWBE/Hbrmg20fM.YTVhEjrouHAjiQkpAqF4aRCwxIkv5c2', 
+                  1, 1, 1)
+          ON DUPLICATE KEY UPDATE id=id;" 2>/dev/null || true
+        
+        print_status "Initial admin user created: david.finley@fire.nsw.gov.au / TestPass123"
+      else
+        print_info "Database already has $USER_COUNT user(s)"
+      fi
+    else
+      print_error "Database schema import failed - users table missing"
+      exit 1
+    fi
+  else
+    print_error "Database schema import failed"
+    exit 1
   fi
 else
-  print_warning "No schema.sql found in repository; skipping schema import"
+  print_error "No schema.sql found in repository - cannot proceed without database setup"
+  exit 1
 fi
 
 # Start or restart application with PM2 (idempotent)
