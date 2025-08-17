@@ -22,11 +22,23 @@ const reportsRoutes = safeRequire('./routes/reports');
 
 const app = express();
 const server = http.createServer(app);
+// Determine allowed origins from APP_URL (production) or localhost (dev)
+const appUrl = process.env.APP_URL || '';
+let allowedOrigins = ["http://localhost:3000", "http://localhost:3001"];
+if (process.env.NODE_ENV === 'production') {
+  try {
+    const parsed = new URL(appUrl);
+    const derivedOrigin = `${parsed.protocol}//${parsed.host}`;
+    allowedOrigins = [derivedOrigin];
+  } catch (err) {
+    // Fallback to deployed domain if APP_URL is not set/invalid
+    allowedOrigins = ["https://frnswrecall90.interactivewebs.com"];
+  }
+}
+
 const io = socketIo(server, {
   cors: {
-    origin: process.env.NODE_ENV === 'production' 
-      ? ["https://interactivewebs.com", "https://www.interactivewebs.com"]
-      : ["http://localhost:3000", "http://localhost:3001"],
+    origin: allowedOrigins,
     methods: ["GET", "POST"],
     credentials: true
   }
@@ -73,9 +85,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // CORS middleware
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ["https://interactivewebs.com", "https://www.interactivewebs.com"]
-    : ["http://localhost:3000", "http://localhost:3001"],
+  origin: allowedOrigins,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']

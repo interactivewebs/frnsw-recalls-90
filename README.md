@@ -48,7 +48,7 @@ FRNSW Recalls 90 is designed specifically for Fire and Rescue NSW Menai Station 
 - **Node.js**: Version 18 or higher
 - **MySQL**: Version 8.0 or higher (or MariaDB)
 - **SSL Certificate**: For production deployment
-- **Domain**: Configured for interactivewebs.com/FRNSWRecalls90
+- **Domain**: Configured for frnswrecall90.interactivewebs.com
 
 ## 🚀 Installation
 
@@ -87,7 +87,7 @@ SMTP_PASS=1194Dub!@#
 FROM_EMAIL=FRNSWRecalls90@interactivewebs.com
 
 # Application Settings
-APP_URL=https://interactivewebs.com/FRNSWRecalls90
+APP_URL=https://frnswrecall90.interactivewebs.com
 PORT=3001
 NODE_ENV=production
 
@@ -304,7 +304,7 @@ The application provides health check endpoints:
 
 ```bash
 # Check application health
-curl https://interactivewebs.com/FRNSWRecalls90/health
+curl https://frnswrecall90.interactivewebs.com/health
 
 # Check database connectivity
 # Available through admin panel
