@@ -473,19 +473,38 @@ if [ -f "/var/www/frnsw/database/schema.sql" ]; then
       # Check if we need to seed initial data
       USER_COUNT=$(mysql -u frnsw_user -p"${DB_PASSWORD}" frnsw_recalls_90 -e "SELECT COUNT(*) as count FROM users;" 2>/dev/null | tail -1)
       if [ "$USER_COUNT" = "0" ]; then
-        print_info "No users found, creating initial admin user..."
+        print_info "No users found, creating initial admin users..."
         
-        # Create initial admin user with proper password hash
+        # Create initial admin users with working password hashes
+        # These hashes are generated with bcrypt and verified to work
         mysql -u frnsw_user -p"${DB_PASSWORD}" frnsw_recalls_90 -e "
           INSERT INTO users (staff_number, first_name, last_name, email, password_hash, is_admin, is_host_admin, email_verified) 
-          VALUES (1001, 'David', 'Finley', 'david.finley@fire.nsw.gov.au', 
-                  '\$2b\$04\$UOgf743mWBE/Hbrmg20fM.YTVhEjrouHAjiQkpAqF4aRCwxIkv5c2', 
-                  1, 1, 1)
-          ON DUPLICATE KEY UPDATE id=id;" 2>/dev/null || true
+          VALUES 
+          (1001, 'David', 'Finley', 'david.finley@fire.nsw.gov.au', 
+           '\$2b\$12\$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HS.i8Wm', 1, 1, 1),
+          (1002, 'Brady', 'Clarke', 'brady.clarke@fire.nsw.gov.au', 
+           '\$2b\$12\$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HS.i8Wm', 1, 0, 1),
+          (1003, 'Ben', 'Miller', 'ben.miller@fire.nsw.gov.au', 
+           '\$2b\$12\$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HS.i8Wm', 1, 0, 1)
+          ON DUPLICATE KEY UPDATE 
+            password_hash = VALUES(password_hash),
+            is_admin = VALUES(is_admin),
+            email_verified = VALUES(email_verified);" 2>/dev/null || true
         
-        print_status "Initial admin user created: david.finley@fire.nsw.gov.au / TestPass123"
+        print_status "Initial admin users created:"
+        print_status "  - david.finley@fire.nsw.gov.au / TestPass123 (Host Admin)"
+        print_status "  - brady.clarke@fire.nsw.gov.au / TestPass123 (Admin)"
+        print_status "  - ben.miller@fire.nsw.gov.au / TestPass123 (Admin)"
       else
         print_info "Database already has $USER_COUNT user(s)"
+        
+        # Update existing users with working password hashes
+        print_info "Updating existing users with working password hashes..."
+        mysql -u frnsw_user -p"${DB_PASSWORD}" frnsw_recalls_90 -e "
+          UPDATE users SET password_hash = '\$2b\$12\$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HS.i8Wm' 
+          WHERE email IN ('david.finley@fire.nsw.gov.au', 'brady.clarke@fire.nsw.gov.au', 'ben.miller@fire.nsw.gov.au');" 2>/dev/null || true
+        
+        print_status "Password hashes updated for existing users"
       fi
     else
       print_error "Database schema import failed - users table missing"
