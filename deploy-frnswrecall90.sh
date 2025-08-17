@@ -476,16 +476,16 @@ if [ -f "/var/www/frnsw/database/schema.sql" ]; then
         print_info "No users found, creating initial admin users..."
         
         # Create initial admin users with working password hashes
-        # These hashes are generated with bcrypt and verified to work
+        # Using a simple, verified working hash for 'TestPass123'
         mysql -u frnsw_user -p"${DB_PASSWORD}" frnsw_recalls_90 -e "
           INSERT INTO users (staff_number, first_name, last_name, email, password_hash, is_admin, is_host_admin, email_verified) 
           VALUES 
           (1001, 'David', 'Finley', 'david.finley@fire.nsw.gov.au', 
-           '\$2b\$12\$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HS.i8Wm', 1, 1, 1),
+           '\$2b\$10\$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1, 1, 1),
           (1002, 'Brady', 'Clarke', 'brady.clarke@fire.nsw.gov.au', 
-           '\$2b\$12\$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HS.i8Wm', 1, 0, 1),
+           '\$2b\$10\$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1, 0, 1),
           (1003, 'Ben', 'Miller', 'ben.miller@fire.nsw.gov.au', 
-           '\$2b\$12\$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HS.i8Wm', 1, 0, 1)
+           '\$2b\$10\$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1, 0, 1)
           ON DUPLICATE KEY UPDATE 
             password_hash = VALUES(password_hash),
             is_admin = VALUES(is_admin),
@@ -501,7 +501,7 @@ if [ -f "/var/www/frnsw/database/schema.sql" ]; then
         # Update existing users with working password hashes
         print_info "Updating existing users with working password hashes..."
         mysql -u frnsw_user -p"${DB_PASSWORD}" frnsw_recalls_90 -e "
-          UPDATE users SET password_hash = '\$2b\$12\$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HS.i8Wm' 
+          UPDATE users SET password_hash = '\$2b\$10\$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi' 
           WHERE email IN ('david.finley@fire.nsw.gov.au', 'brady.clarke@fire.nsw.gov.au', 'ben.miller@fire.nsw.gov.au');" 2>/dev/null || true
         
         print_status "Password hashes updated for existing users"

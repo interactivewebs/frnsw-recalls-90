@@ -36,7 +36,7 @@ ORDER BY staff_number;" 2>/dev/null
 echo "4. Checking for working password hash..."
 WORKING_HASH_COUNT=$(mysql -u frnsw_user -p'frnsw5678!@#' frnsw_recalls_90 -e "
 SELECT COUNT(*) FROM users 
-WHERE password_hash = '\$2b\$12\$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HS.i8Wm';" 2>/dev/null | tail -1)
+WHERE password_hash = '\$2b\$10\$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi';" 2>/dev/null | tail -1)
 
 if [ "$WORKING_HASH_COUNT" -gt 0 ]; then
     echo "   ✅ Found $WORKING_HASH_COUNT user(s) with working password hash"
