@@ -522,9 +522,11 @@ fi
 # Start or restart application with PM2 (idempotent)
 print_info "Starting application with PM2..."
 cd /var/www/frnsw
+export NODE_ENV=production
+export PORT=3001
 if sudo -u frnsw pm2 describe frnsw-recalls-90 >/dev/null 2>&1; then
   print_info "PM2 app exists, restarting..."
-  sudo -u frnsw pm2 restart frnsw-recalls-90
+  sudo -u frnsw pm2 restart frnsw-recalls-90 --update-env
 else
   print_info "PM2 app not found, starting new instance..."
   sudo -u frnsw pm2 start ecosystem.config.js --env production

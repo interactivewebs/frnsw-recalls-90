@@ -21,6 +21,8 @@ const reportsRoutes = safeRequire('./routes/reports');
 // const pushRoutes = safeRequire('./routes/push');
 
 const app = express();
+// Behind nginx, trust proxy headers for rate-limit/X-Forwarded-For
+app.set('trust proxy', 1);
 const server = http.createServer(app);
 // Determine allowed origins from APP_URL (production) or localhost (dev)
 const appUrl = process.env.APP_URL || '';
