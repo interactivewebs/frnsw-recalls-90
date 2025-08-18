@@ -198,11 +198,18 @@ mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "FLUSH PRIVILEGES;"
 print_status "MySQL secured"
 
 # Create application database
-print_info "Creating application database..."
-mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "CREATE DATABASE IF NOT EXISTS frnsw_recalls_90;"
-mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "CREATE USER IF NOT EXISTS 'frnsw_user'@'localhost' IDENTIFIED BY '${DB_PASSWORD}';"
-mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "GRANT ALL PRIVILEGES ON frnsw_recalls_90.* TO 'frnsw_user'@'localhost';"
-mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "FLUSH PRIVILEGES;"
+print_info "Creating application database and resetting DB user credentials..."
+mysql -u root -p"${MYSQL_ROOT_PASSWORD}" <<SQL
+CREATE DATABASE IF NOT EXISTS frnsw_recalls_90;
+CREATE USER IF NOT EXISTS 'frnsw_user'@'localhost' IDENTIFIED WITH mysql_native_password BY '${DB_PASSWORD}';
+ALTER USER 'frnsw_user'@'localhost' IDENTIFIED WITH mysql_native_password BY '${DB_PASSWORD}';
+-- Also allow TCP loopback just in case
+CREATE USER IF NOT EXISTS 'frnsw_user'@'127.0.0.1' IDENTIFIED WITH mysql_native_password BY '${DB_PASSWORD}';
+ALTER USER 'frnsw_user'@'127.0.0.1' IDENTIFIED WITH mysql_native_password BY '${DB_PASSWORD}';
+GRANT ALL PRIVILEGES ON frnsw_recalls_90.* TO 'frnsw_user'@'localhost';
+GRANT ALL PRIVILEGES ON frnsw_recalls_90.* TO 'frnsw_user'@'127.0.0.1';
+FLUSH PRIVILEGES;
+SQL
 print_status "Database created"
 
 # Install PM2
@@ -463,15 +470,15 @@ if [ -f "/var/www/frnsw/database/schema.sql" ]; then
   fi
   
   # Import schema with better error handling
-  if mysql -f -u frnsw_user -p"${DB_PASSWORD}" frnsw_recalls_90 < /var/www/frnsw/database/schema.sql 2>/dev/null; then
+  if mysql -f -u frnsw_user -p"${DB_PASSWORD}" frnsw_recalls_90 < /var/www/frnsw/database/schema.sql; then
     print_status "Database schema imported successfully"
     
     # Verify key tables exist
-    if mysql -u frnsw_user -p"${DB_PASSWORD}" frnsw_recalls_90 -e "SHOW TABLES;" 2>/dev/null | grep -q "users"; then
+    if mysql -N -B -u frnsw_user -p"${DB_PASSWORD}" frnsw_recalls_90 -e "SHOW TABLES LIKE 'users';" | grep -q users; then
       print_status "Database tables verified - users table exists"
       
       # Check if we need to seed initial data
-      USER_COUNT=$(mysql -u frnsw_user -p"${DB_PASSWORD}" frnsw_recalls_90 -e "SELECT COUNT(*) as count FROM users;" 2>/dev/null | tail -1)
+      USER_COUNT=$(mysql -N -B -u frnsw_user -p"${DB_PASSWORD}" frnsw_recalls_90 -e "SELECT COUNT(*) FROM users;")
       if [ "$USER_COUNT" = "0" ]; then
         print_info "No users found, creating initial admin users..."
         
@@ -527,11 +534,13 @@ export PORT=3001
 if sudo -u frnsw pm2 describe frnsw-recalls-90 >/dev/null 2>&1; then
   print_info "PM2 app exists, restarting..."
   sudo -u frnsw pm2 restart frnsw-recalls-90 --update-env
+  sleep 2
 else
   print_info "PM2 app not found, starting new instance..."
   sudo -u frnsw pm2 start ecosystem.config.js --env production
 fi
 sudo -u frnsw pm2 save || true
+sudo -u frnsw pm2 logs frnsw-recalls-90 --lines 20 | tail -n +1 || true
 # Ensure PM2 boots with system
     pm2 startup systemd -u frnsw --hp /var/www/frnsw >/dev/null 2>&1 || true
     sleep 3
