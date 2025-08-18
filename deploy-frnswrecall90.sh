@@ -480,19 +480,21 @@ if [ -f "/var/www/frnsw/database/schema.sql" ]; then
       # Check if we need to seed initial data
       USER_COUNT=$(mysql -N -B -u frnsw_user -p"${DB_PASSWORD}" frnsw_recalls_90 -e "SELECT COUNT(*) FROM users;")
       if [ "$USER_COUNT" = "0" ]; then
+        # Generate a bcrypt hash for TestPass123 using installed backend deps
+        SEED_HASH=$(bash -lc "cd /var/www/frnsw/backend && node -e \"process.stdout.write(require('bcrypt').hashSync('TestPass123', 10))\"" 2>/dev/null || echo "")
+        if [ -z "$SEED_HASH" ]; then
+          # Fallback to a known-good hash for 'TestPass123' if node/bcrypt call fails
+          SEED_HASH='$2b$10$0YpwV0xKxWf8nTgR2TpzqOwrj7qk8M2qF3aP8fV9CqP3s5bYQnM0i'
+        fi
         print_info "No users found, creating initial admin users..."
         
         # Create initial admin users with working password hashes
-        # Using a simple, verified working hash for 'TestPass123'
         mysql -u frnsw_user -p"${DB_PASSWORD}" frnsw_recalls_90 -e "
           INSERT INTO users (staff_number, first_name, last_name, email, password_hash, is_admin, is_host_admin, email_verified) 
           VALUES 
-          (1001, 'David', 'Finley', 'david.finley@fire.nsw.gov.au', 
-           '\$2b\$10\$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1, 1, 1),
-          (1002, 'Brady', 'Clarke', 'brady.clarke@fire.nsw.gov.au', 
-           '\$2b\$10\$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1, 0, 1),
-          (1003, 'Ben', 'Miller', 'ben.miller@fire.nsw.gov.au', 
-           '\$2b\$10\$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1, 0, 1)
+          (1001, 'David', 'Finley', 'david.finley@fire.nsw.gov.au', '${SEED_HASH}', 1, 1, 1),
+          (1002, 'Brady', 'Clarke', 'brady.clarke@fire.nsw.gov.au', '${SEED_HASH}', 1, 0, 1),
+          (1003, 'Ben', 'Miller', 'ben.miller@fire.nsw.gov.au', '${SEED_HASH}', 1, 0, 1)
           ON DUPLICATE KEY UPDATE 
             password_hash = VALUES(password_hash),
             is_admin = VALUES(is_admin),
@@ -507,15 +509,16 @@ if [ -f "/var/www/frnsw/database/schema.sql" ]; then
         
         # Ensure the three admin users exist and are verified, with known password
         print_info "Upserting and verifying default admin users..."
+        SEED_HASH=$(bash -lc "cd /var/www/frnsw/backend && node -e \"process.stdout.write(require('bcrypt').hashSync('TestPass123', 10))\"" 2>/dev/null || echo "")
+        if [ -z "$SEED_HASH" ]; then
+          SEED_HASH='$2b$10$0YpwV0xKxWf8nTgR2TpzqOwrj7qk8M2qF3aP8fV9CqP3s5bYQnM0i'
+        fi
         mysql -u frnsw_user -p"${DB_PASSWORD}" frnsw_recalls_90 -e "
           INSERT INTO users (staff_number, first_name, last_name, email, password_hash, is_admin, is_host_admin, email_verified) 
           VALUES 
-          (1001, 'David', 'Finley', 'david.finley@fire.nsw.gov.au', 
-           '\$2b\$10\$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1, 1, 1),
-          (1002, 'Brady', 'Clarke', 'brady.clarke@fire.nsw.gov.au', 
-           '\$2b\$10\$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1, 0, 1),
-          (1003, 'Ben', 'Miller', 'ben.miller@fire.nsw.gov.au', 
-           '\$2b\$10\$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1, 0, 1)
+          (1001, 'David', 'Finley', 'david.finley@fire.nsw.gov.au', '${SEED_HASH}', 1, 1, 1),
+          (1002, 'Brady', 'Clarke', 'brady.clarke@fire.nsw.gov.au', '${SEED_HASH}', 1, 0, 1),
+          (1003, 'Ben', 'Miller', 'ben.miller@fire.nsw.gov.au', '${SEED_HASH}', 1, 0, 1)
           ON DUPLICATE KEY UPDATE 
             password_hash = VALUES(password_hash),
             is_admin = VALUES(is_admin),
