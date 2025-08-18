@@ -197,7 +197,32 @@ mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "DELETE FROM mysql.db WHERE Db='test
 mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "FLUSH PRIVILEGES;"
 print_status "MySQL secured"
 
-# Create application database
+# Create or reset application database
+DB_RESET=${DB_RESET:-false}
+
+# Normalize boolean input
+case "${DB_RESET,,}" in
+  yes|true|1) DB_RESET=true ;;
+  *) DB_RESET=false ;;
+esac
+
+DB_EXISTS=$(mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -N -B -e "SHOW DATABASES LIKE 'frnsw_recalls_90';" 2>/dev/null | grep -c frnsw_recalls_90 || true)
+
+if $DB_RESET && [ "$DB_EXISTS" -gt 0 ]; then
+  print_warning "DB_RESET=true: Dropping existing database and user..."
+  mysql -u root -p"${MYSQL_ROOT_PASSWORD}" <<SQL
+DROP DATABASE IF EXISTS frnsw_recalls_90;
+DROP USER IF EXISTS 'frnsw_user'@'localhost';
+DROP USER IF EXISTS 'frnsw_user'@'127.0.0.1';
+FLUSH PRIVILEGES;
+SQL
+  print_status "Existing database and users dropped"
+else
+  if [ "$DB_EXISTS" -gt 0 ]; then
+    print_info "Database already exists; proceeding idempotently (schema import will skip existing tables)."
+  fi
+fi
+
 print_info "Creating application database and resetting DB user credentials..."
 mysql -u root -p"${MYSQL_ROOT_PASSWORD}" <<SQL
 CREATE DATABASE IF NOT EXISTS frnsw_recalls_90;
