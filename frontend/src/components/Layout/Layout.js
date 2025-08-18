@@ -1,4 +1,5 @@
 import React from 'react';
+import packageJson from '../../../package.json';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -6,6 +7,7 @@ const Layout = ({ children }) => {
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const appVersion = (process.env.REACT_APP_VERSION || packageJson.version || '1.0').toString();
 
   const handleLogout = async () => {
     await logout();
@@ -104,6 +106,13 @@ const Layout = ({ children }) => {
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {children}
       </main>
+
+      <footer className="bg-gray-100 border-t">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 text-sm text-gray-500 flex justify-between">
+          <span>© {new Date().getFullYear()} FRNSW Recalls 90</span>
+          <span>Version {appVersion.startsWith('v') ? appVersion.substring(1) : appVersion}</span>
+        </div>
+      </footer>
     </div>
   );
 };
