@@ -289,11 +289,11 @@ cat > /var/www/frnsw/backend/.env << EOF
 # Database Configuration
 DB_HOST=localhost
 DB_USER=frnsw_user
-DB_PASSWORD=${DB_PASSWORD}
+DB_PASSWORD='${DB_PASSWORD}'
 DB_NAME=frnsw_recalls_90
 
 # JWT Configuration
-JWT_SECRET=${JWT_SECRET}
+JWT_SECRET='${JWT_SECRET}'
 
 # Application Configuration
 APP_URL=http://${DOMAIN_NAME}
@@ -301,11 +301,11 @@ PORT=3001
 NODE_ENV=production
 
 # Email Configuration (defaults set for InteractiveWebs relay)
-SMTP_HOST=${SMTP_HOST:-mail.interactivewebs.com}
-SMTP_PORT=${SMTP_PORT:-25}
-SMTP_USER=${SMTP_USER:-}
-SMTP_PASS=${SMTP_PASS:-}
-FROM_EMAIL=${FROM_EMAIL:-frnsw_NO_REPLY@interactivewebs.com}
+SMTP_HOST='${SMTP_HOST:-mail.interactivewebs.com}'
+SMTP_PORT='${SMTP_PORT:-25}'
+SMTP_USER='${SMTP_USER:-}'
+SMTP_PASS='${SMTP_PASS:-}'
+FROM_EMAIL='${FROM_EMAIL:-frnsw_NO_REPLY@interactivewebs.com}'
 
 # Security
 BCRYPT_ROUNDS=12
