@@ -14,7 +14,7 @@ const Layout = ({ children }) => {
     navigate('/login');
   };
 
-  const isActive = (path) => location.pathname === path;
+  const isActive = (path) => location.pathname === path || (path === '/' && location.pathname === '/dashboard');
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -22,9 +22,9 @@ const Layout = ({ children }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <Link to="/dashboard" className="flex items-center space-x-3">
+              <Link to="/" className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-white rounded text-frnsw-red flex items-center justify-center font-bold">
-                  ��
+                  
                 </div>
                 <span className="font-bold text-lg">FRNSW Recalls 90</span>
               </Link>
@@ -32,9 +32,9 @@ const Layout = ({ children }) => {
 
             <nav className="hidden md:flex space-x-6">
               <Link
-                to="/dashboard"
+                to="/"
                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isActive('/dashboard')
+                  isActive('/')
                     ? 'bg-red-700 text-white'
                     : 'text-red-100 hover:bg-red-700 hover:text-white'
                 }`}

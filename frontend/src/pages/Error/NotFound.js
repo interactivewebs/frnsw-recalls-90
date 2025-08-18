@@ -15,7 +15,7 @@ const NotFound = () => {
 
         <div className="space-y-4">
           <Link
-            to="/dashboard"
+            to="/"
             className="block w-full bg-frnsw-red text-white px-4 py-3 rounded-md hover:bg-red-700 transition-colors font-medium"
           >
             Go to Dashboard
