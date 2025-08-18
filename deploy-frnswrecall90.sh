@@ -48,6 +48,21 @@ print_header() {
     echo -e "${NC}"
 }
 
+# Simple health wait helper for clearer success/fail reporting
+wait_for_backend() {
+  local retries=30
+  local delay=2
+  for i in $(seq 1 ${retries}); do
+    if curl -fsS http://localhost:3001/health >/dev/null 2>&1; then
+      print_status "Backend health endpoint is responding"
+      return 0
+    fi
+    sleep ${delay}
+  done
+  print_error "Backend did not become healthy within $((retries*delay))s"
+  return 1
+}
+
 # Check if running as root
 if [[ $EUID -ne 0 ]]; then
    print_error "This script must be run as root"
@@ -584,11 +599,18 @@ sudo -u frnsw pm2 logs frnsw-recalls-90 --lines 20 | tail -n +1 || true
     pm2 startup systemd -u frnsw --hp /var/www/frnsw >/dev/null 2>&1 || true
     sleep 3
     if sudo -u frnsw pm2 list | grep -q "online"; then
-        print_status "Application is running successfully"
+        print_status "Application process is online in PM2"
     else
-        print_warning "Application may not be running properly"
-  sudo -u frnsw pm2 logs --lines 20 || true
-fi
+        print_warning "Application process may not be online in PM2"
+        sudo -u frnsw pm2 logs --lines 50 || true
+    fi
+
+    # Wait for backend to report healthy
+    if wait_for_backend; then
+        APP_HEALTHY=true
+    else
+        APP_HEALTHY=false
+    fi
 
 # Configure Nginx
 print_info "Configuring Nginx..."
@@ -841,4 +863,8 @@ print_warning "📝 Next steps:"
 echo "    1. Verify email settings in /var/www/frnsw/backend/.env"
 echo "    2. Test all functionality"
 echo
-print_status "Deployment completed successfully!"
+if [ "${APP_HEALTHY:-false}" = true ]; then
+  print_status "Deployment completed successfully! Backend is healthy."
+else
+  print_warning "Deployment finished, but backend health is failing. Check PM2 and logs above."
+fi
