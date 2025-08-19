@@ -180,6 +180,9 @@ function App() {
             />
           </Route>
 
+          {/* Legacy path redirect: /dashboard -> / */}
+          <Route path="/dashboard" element={<Navigate to="/" replace />} />
+
           {/* 404 route */}
           <Route
             path="*"
