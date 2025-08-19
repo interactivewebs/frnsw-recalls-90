@@ -339,7 +339,7 @@ JWT_SECRET='${JWT_SECRET}'
 APP_URL=http://${DOMAIN_NAME}
 PORT=3001
 NODE_ENV=production
-REACT_APP_VERSION=${REACT_APP_VERSION:-1.03}
+REACT_APP_VERSION=${REACT_APP_VERSION:-1.04}
 
 # Email Configuration (defaults set for InteractiveWebs relay)
 SMTP_HOST='${SMTP_HOST:-mail.interactivewebs.com}'
@@ -545,6 +545,30 @@ if [ -f "/var/www/frnsw/database/schema.sql" ]; then
         print_status "  - david.finley@fire.nsw.gov.au / TestPass123 (Host Admin)"
         print_status "  - brady.clarke@fire.nsw.gov.au / TestPass123 (Admin)"
         print_status "  - ben.miller@fire.nsw.gov.au / TestPass123 (Admin)"
+        
+        # Create actual FRNSW staff users (non-admin)
+        print_info "Creating FRNSW staff users..."
+        mysql -u frnsw_user -p"${DB_PASSWORD}" frnsw_recalls_90 -e "
+          INSERT INTO users (staff_number, first_name, last_name, email, password_hash, is_admin, is_host_admin, email_verified) 
+          VALUES 
+          (521256, 'Ralph', 'BARTON', 'ralph.barton@fire.nsw.gov.au', '${SEED_HASH}', 0, 0, 1),
+          (520501, 'Matthew', 'BURGESS', 'matthew.burgess@fire.nsw.gov.au', '${SEED_HASH}', 0, 0, 1),
+          (90006, 'Brady', 'CLARKE', 'brady.clarke@fire.nsw.gov.au', '${SEED_HASH}', 1, 0, 1),
+          (910492, 'Wayne', 'Clingan', 'wayne.clingan@fire.nsw.gov.au', '${SEED_HASH}', 0, 0, 1),
+          (908818, 'Aaron', 'Crossin', 'aaron.crossin@fire.nsw.gov.au', '${SEED_HASH}', 0, 0, 1),
+          (908865, 'Brie', 'Dutton', 'brie.dutton@fire.nsw.gov.au', '${SEED_HASH}', 0, 0, 1),
+          (907747, 'David', 'Finley', 'david.finley@fire.nsw.gov.au', '${SEED_HASH}', 1, 1, 1),
+          (910491, 'Felicity', 'Finley', 'felicity.finley@fire.nsw.gov.au', '${SEED_HASH}', 0, 0, 1),
+          (908466, 'Carly', 'McLachlan', 'carly.mclachlan@fire.nsw.gov.au', '${SEED_HASH}', 0, 0, 1),
+          (521662, 'Benjamin', 'MILLER', 'benjamin.miller@fire.nsw.gov.au', '${SEED_HASH}', 1, 0, 1),
+          (910313, 'Mitchell', 'Smithson', 'mitchell.smithson@fire.nsw.gov.au', '${SEED_HASH}', 0, 0, 1),
+          (904088, 'Gavin', 'WALSH', 'gavin.walsh@fire.nsw.gov.au', '${SEED_HASH}', 0, 0, 1),
+          (910394, 'Cameron', 'WHITE', 'cameron.white@fire.nsw.gov.au', '${SEED_HASH}', 0, 0, 1)
+          ON DUPLICATE KEY UPDATE 
+            password_hash = VALUES(password_hash),
+            email_verified = VALUES(email_verified);" 2>/dev/null || true
+        
+        print_status "FRNSW staff users created with TestPass123 password"
       else
         print_info "Database already has $USER_COUNT user(s)"
         
@@ -567,6 +591,30 @@ if [ -f "/var/www/frnsw/database/schema.sql" ]; then
             email_verified = 1;" 2>/dev/null || true
         
         print_status "Admin users ensured and verified"
+        
+        # Ensure FRNSW staff users exist and are verified
+        print_info "Upserting FRNSW staff users..."
+        mysql -u frnsw_user -p"${DB_PASSWORD}" frnsw_recalls_90 -e "
+          INSERT INTO users (staff_number, first_name, last_name, email, password_hash, is_admin, is_host_admin, email_verified) 
+          VALUES 
+          (521256, 'Ralph', 'BARTON', 'ralph.barton@fire.nsw.gov.au', '${SEED_HASH}', 0, 0, 1),
+          (520501, 'Matthew', 'BURGESS', 'matthew.burgess@fire.nsw.gov.au', '${SEED_HASH}', 0, 0, 1),
+          (90006, 'Brady', 'CLARKE', 'brady.clarke@fire.nsw.gov.au', '${SEED_HASH}', 1, 0, 1),
+          (910492, 'Wayne', 'Clingan', 'wayne.clingan@fire.nsw.gov.au', '${SEED_HASH}', 0, 0, 1),
+          (908818, 'Aaron', 'Crossin', 'aaron.crossin@fire.nsw.gov.au', '${SEED_HASH}', 0, 0, 1),
+          (908865, 'Brie', 'Dutton', 'brie.dutton@fire.nsw.gov.au', '${SEED_HASH}', 0, 0, 1),
+          (907747, 'David', 'Finley', 'david.finley@fire.nsw.gov.au', '${SEED_HASH}', 1, 1, 1),
+          (910491, 'Felicity', 'Finley', 'felicity.finley@fire.nsw.gov.au', '${SEED_HASH}', 0, 0, 1),
+          (908466, 'Carly', 'McLachlan', 'carly.mclachlan@fire.nsw.gov.au', '${SEED_HASH}', 0, 0, 1),
+          (521662, 'Benjamin', 'MILLER', 'benjamin.miller@fire.nsw.gov.au', '${SEED_HASH}', 1, 0, 1),
+          (910313, 'Mitchell', 'Smithson', 'mitchell.smithson@fire.nsw.gov.au', '${SEED_HASH}', 0, 0, 1),
+          (904088, 'Gavin', 'WALSH', 'gavin.walsh@fire.nsw.gov.au', '${SEED_HASH}', 0, 0, 1),
+          (910394, 'Cameron', 'WHITE', 'cameron.white@fire.nsw.gov.au', '${SEED_HASH}', 0, 0, 1)
+          ON DUPLICATE KEY UPDATE 
+            password_hash = VALUES(password_hash),
+            email_verified = 1;" 2>/dev/null || true
+        
+        print_status "FRNSW staff users ensured and verified"
       fi
     else
       print_error "Database schema import failed - users table missing"

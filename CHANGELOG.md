@@ -1,5 +1,40 @@
 # FRNSW Recalls 90 - Changelog
 
+## Version 1.0.4 (2025-01-27)
+
+### 🏢 Staff Management
+- **Real FRNSW Staff List**: Replaced test names with actual FRNSW staff members
+  - **Problem**: Using generic test names instead of real staff data
+  - **Solution**: Updated approved_staff table and user creation with actual FRNSW staff from provided list
+  - **Files Changed**: `database/schema.sql`, `deploy-frnswrecall90.sh`
+
+- **Staff User Creation**: Added automatic creation of all FRNSW staff users
+  - **Problem**: Only admin users were being created automatically
+  - **Solution**: Added all 13 FRNSW staff members with their actual staff numbers and emails
+  - **Files Changed**: `deploy-frnswrecall90.sh`
+
+- **Re-enabled Approved Staff Check**: Restored security check for registration
+  - **Problem**: Approved staff check was disabled for testing
+  - **Solution**: Re-enabled the check now that we have the real staff list
+  - **Files Changed**: `backend/routes/auth.js`
+
+### 📋 Staff List Added:
+- Ralph BARTON (521256)
+- Matthew BURGESS (520501) 
+- Brady CLARKE (90006) - Admin
+- Wayne Clingan (910492)
+- Aaron Crossin (908818)
+- Brie Dutton (908865)
+- David Finley (907747) - Host Admin
+- Felicity Finley (910491)
+- Carly McLachlan (908466)
+- Benjamin MILLER (521662) - Admin
+- Mitchell Smithson (910313)
+- Gavin WALSH (904088)
+- Cameron WHITE (910394)
+
+---
+
 ## Version 1.0.3 (2025-01-27)
 
 ### 🐛 Bug Fixes

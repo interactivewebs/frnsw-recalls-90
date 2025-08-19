@@ -53,14 +53,11 @@ router.post('/register', registerValidation, async (req, res) => {
 
     console.log('Approved staff found:', approvedStaff.length);
 
-    // TEMPORARY: For testing, allow registration if not in approved list
-    // TODO: Remove this in production
     if (approvedStaff.length === 0) {
-      console.log('Staff not in approved list, but allowing for testing');
-      // Comment out the return statement to allow registration
-      // return res.status(400).json({ 
-      //   error: 'Staff member not found on approved list. Please contact your administrator.' 
-      // });
+      console.log('Staff not in approved list:', { lastName, firstInitial });
+      return res.status(400).json({ 
+        error: 'Staff member not found on approved list. Please contact your administrator.' 
+      });
     }
 
     // Check if email or staff number already exists
