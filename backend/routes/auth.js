@@ -57,12 +57,9 @@ router.post('/register', registerValidation, async (req, res) => {
     if (approvedStaff.length === 0) {
       console.log('Staff not in approved list:', { lastName, lastNameUpper, firstInitial });
       console.log('Available approved staff:', await pool.execute('SELECT last_name, first_initial FROM approved_staff'));
-      
-      // TEMPORARY: Allow registration for debugging
-      console.log('Temporarily allowing registration for debugging purposes');
-      // return res.status(400).json({ 
-      //   error: `Staff member "${firstName} ${lastName}" not found on approved list. Please verify your name and staff number, or contact your administrator.` 
-      // });
+      return res.status(400).json({ 
+        error: `Staff member "${firstName} ${lastName}" not found on approved list. Please verify your name and staff number, or contact your administrator.` 
+      });
     }
 
     // Check if email or staff number already exists
