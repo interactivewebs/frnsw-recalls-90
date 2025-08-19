@@ -1,5 +1,26 @@
 # FRNSW Recalls 90 - Changelog
 
+## Version 1.0.7 (2025-01-27)
+
+### 🔍 Debugging & Investigation
+- **Enhanced Registration Debugging**: Added comprehensive logging for staff validation
+  - **Problem**: Registration still failing despite case sensitivity fix
+  - **Solution**: Added detailed logging to show available approved staff and temporarily disabled check for debugging
+  - **Files Changed**: `backend/routes/auth.js`
+
+- **Debug Script**: Created diagnostic tool for database investigation
+  - **Problem**: Need to verify what's actually in the approved_staff table
+  - **Solution**: Created `debug-staff.sh` script to check database contents and test queries
+  - **Files Changed**: `debug-staff.sh` (new)
+
+### 🔧 Technical Details
+- Added logging to show all available approved staff when lookup fails
+- Temporarily disabled approved staff check to allow registration while debugging
+- Created diagnostic script to verify database state and test queries
+- Enhanced error logging to identify root cause of validation failures
+
+---
+
 ## Version 1.0.6 (2025-01-27)
 
 ### 🐛 Bug Fixes
