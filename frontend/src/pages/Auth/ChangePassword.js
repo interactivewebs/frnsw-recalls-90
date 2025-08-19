@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
 const ChangePassword = () => {
   const { changePassword } = useAuth();
+  const navigate = useNavigate();
   const [form, setForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -20,6 +22,8 @@ const ChangePassword = () => {
     try {
       await changePassword(form.currentPassword, form.newPassword);
       setForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      // Redirect to dashboard after successful change
+      navigate('/', { replace: true });
     } catch (err) {
       setError(err.response?.data?.error || 'Password change failed');
     } finally {
@@ -48,6 +52,9 @@ const ChangePassword = () => {
             <input name="confirmPassword" type="password" required className="appearance-none rounded-md w-full px-3 py-2 border border-gray-300 sm:text-sm" placeholder="Confirm new password" value={form.confirmPassword} onChange={onChange} />
           </div>
           <button type="submit" disabled={loading} className="w-full py-2 px-4 rounded-md text-white bg-frnsw-red hover:bg-red-700 disabled:opacity-50">{loading ? 'Saving...' : 'Update Password'}</button>
+          <div className="text-center text-sm mt-2">
+            <Link to="/" className="text-frnsw-red hover:text-red-700">Back to Dashboard</Link>
+          </div>
         </form>
       </div>
     </div>
