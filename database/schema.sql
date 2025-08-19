@@ -188,9 +188,8 @@ INSERT INTO approved_staff (last_name, first_initial) VALUES
 ('Finley', 'D'),
 ('Finley', 'F'),
 ('McLachlan', 'C'),
-('MILLER', 'B'),
+('Miller', 'B'),
 ('Smithson', 'M'),
-('WALSH', 'G'),
 ('WHITE', 'C');
 
 -- Note: Default admin users will be inserted after password hashing is set up

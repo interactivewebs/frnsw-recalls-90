@@ -37,9 +37,8 @@ INSERT INTO approved_staff (last_name, first_initial) VALUES
 ('Finley', 'D'),
 ('Finley', 'F'),
 ('McLachlan', 'C'),
-('MILLER', 'B'),
+('Miller', 'B'),
 ('Smithson', 'M'),
-('WALSH', 'G'),
 ('WHITE', 'C');" 2>/dev/null
 
 if [ $? -eq 0 ]; then

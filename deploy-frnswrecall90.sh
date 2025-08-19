@@ -603,9 +603,8 @@ if [ -f "/var/www/frnsw/database/schema.sql" ]; then
           (907747, 'David', 'Finley', 'david.finley@fire.nsw.gov.au', '${SEED_HASH}', 1, 1, 1),
           (910491, 'Felicity', 'Finley', 'felicity.finley@fire.nsw.gov.au', '${SEED_HASH}', 0, 0, 1),
           (908466, 'Carly', 'McLachlan', 'carly.mclachlan@fire.nsw.gov.au', '${SEED_HASH}', 0, 0, 1),
-          (521662, 'Benjamin', 'MILLER', 'benjamin.miller@fire.nsw.gov.au', '${SEED_HASH}', 1, 0, 1),
+          (521662, 'Ben', 'Miller', 'ben.miller@fire.nsw.gov.au', '${SEED_HASH}', 1, 0, 1),
           (910313, 'Mitchell', 'Smithson', 'mitchell.smithson@fire.nsw.gov.au', '${SEED_HASH}', 0, 0, 1),
-          (904088, 'Gavin', 'WALSH', 'gavin.walsh@fire.nsw.gov.au', '${SEED_HASH}', 0, 0, 1),
           (910394, 'Cameron', 'WHITE', 'cameron.white@fire.nsw.gov.au', '${SEED_HASH}', 0, 0, 1)
           ON DUPLICATE KEY UPDATE 
             password_hash = VALUES(password_hash),
@@ -649,9 +648,8 @@ if [ -f "/var/www/frnsw/database/schema.sql" ]; then
           (907747, 'David', 'Finley', 'david.finley@fire.nsw.gov.au', '${SEED_HASH}', 1, 1, 1),
           (910491, 'Felicity', 'Finley', 'felicity.finley@fire.nsw.gov.au', '${SEED_HASH}', 0, 0, 1),
           (908466, 'Carly', 'McLachlan', 'carly.mclachlan@fire.nsw.gov.au', '${SEED_HASH}', 0, 0, 1),
-          (521662, 'Benjamin', 'MILLER', 'benjamin.miller@fire.nsw.gov.au', '${SEED_HASH}', 1, 0, 1),
+          (521662, 'Ben', 'Miller', 'ben.miller@fire.nsw.gov.au', '${SEED_HASH}', 1, 0, 1),
           (910313, 'Mitchell', 'Smithson', 'mitchell.smithson@fire.nsw.gov.au', '${SEED_HASH}', 0, 0, 1),
-          (904088, 'Gavin', 'WALSH', 'gavin.walsh@fire.nsw.gov.au', '${SEED_HASH}', 0, 0, 1),
           (910394, 'Cameron', 'WHITE', 'cameron.white@fire.nsw.gov.au', '${SEED_HASH}', 0, 0, 1)
           ON DUPLICATE KEY UPDATE 
             password_hash = VALUES(password_hash),

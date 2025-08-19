@@ -106,9 +106,9 @@
 - David Finley (907747) - Host Admin
 - Felicity Finley (910491)
 - Carly McLachlan (908466)
-- Benjamin MILLER (521662) - Admin
+- Ben Miller (521662) - Admin
 - Mitchell Smithson (910313)
-- Gavin WALSH (904088)
+  (Removed Gavin Walsh)
 - Cameron WHITE (910394)
 
 ---
