@@ -42,21 +42,22 @@ router.post('/register', registerValidation, async (req, res) => {
       return res.status(400).json({ error: 'Email must be a @fire.nsw.gov.au address' });
     }
 
-    // Check if staff member is on approved list
+    // Check if staff member is on approved list (case-insensitive)
     const firstInitial = firstName.charAt(0).toUpperCase();
-    console.log('Checking approved staff for:', { lastName, firstInitial });
+    const lastNameUpper = lastName.toUpperCase();
+    console.log('Checking approved staff for:', { lastName, lastNameUpper, firstInitial });
     
     const [approvedStaff] = await pool.execute(
-      'SELECT * FROM approved_staff WHERE last_name = ? AND first_initial = ?',
-      [lastName, firstInitial]
+      'SELECT * FROM approved_staff WHERE UPPER(last_name) = ? AND first_initial = ?',
+      [lastNameUpper, firstInitial]
     );
 
     console.log('Approved staff found:', approvedStaff.length);
 
     if (approvedStaff.length === 0) {
-      console.log('Staff not in approved list:', { lastName, firstInitial });
+      console.log('Staff not in approved list:', { lastName, lastNameUpper, firstInitial });
       return res.status(400).json({ 
-        error: 'Staff member not found on approved list. Please contact your administrator.' 
+        error: `Staff member "${firstName} ${lastName}" not found on approved list. Please verify your name and staff number, or contact your administrator.` 
       });
     }
 

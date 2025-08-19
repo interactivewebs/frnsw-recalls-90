@@ -1,5 +1,26 @@
 # FRNSW Recalls 90 - Changelog
 
+## Version 1.0.6 (2025-01-27)
+
+### 🐛 Bug Fixes
+- **Case Sensitivity in Staff Validation**: Fixed approved staff list matching
+  - **Problem**: Users entering "Burgess" couldn't register because database had "BURGESS" (uppercase)
+  - **Solution**: Made last name comparison case-insensitive using `UPPER(last_name)` in SQL query
+  - **Files Changed**: `backend/routes/auth.js`
+
+- **Improved Error Messages**: Better user feedback for registration issues
+  - **Problem**: Generic error message didn't help users understand what was wrong
+  - **Solution**: Added specific error message showing the name that wasn't found
+  - **Files Changed**: `backend/routes/auth.js`
+
+### 🔧 Technical Details
+- Changed SQL query from `last_name = ?` to `UPPER(last_name) = ?`
+- Added `lastNameUpper` variable to normalize input
+- Enhanced logging to show both original and uppercase versions
+- Improved error message format: `"Staff member "John Smith" not found on approved list..."`
+
+---
+
 ## Version 1.0.5 (2025-01-27)
 
 ### ⚡ Performance Improvements

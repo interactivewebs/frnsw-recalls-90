@@ -1,6 +1,6 @@
 {
   "name": "frnsw-recalls-90-frontend",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Frontend for FRNSW Recalls 90 - Fire and Rescue NSW Menai Station 90 Recall Management System",
   "private": true,
   "dependencies": {
