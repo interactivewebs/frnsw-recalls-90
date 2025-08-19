@@ -85,19 +85,18 @@ const Layout = ({ children }) => {
               )}
             </nav>
 
-            <div className="flex items-center space-x-4">
-              <Link
-                to="/profile"
-                className="text-red-100 hover:text-white transition-colors"
-              >
-                {user?.first_name} {user?.last_name}
-              </Link>
-              <button
-                onClick={handleLogout}
-                className="bg-red-700 hover:bg-red-800 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-              >
-                Logout
-              </button>
+            <div className="relative">
+              <details className="group">
+                <summary className="flex items-center space-x-2 cursor-pointer list-none text-red-100 hover:text-white transition-colors">
+                  <span>{user?.first_name} {user?.last_name}</span>
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd"/></svg>
+                </summary>
+                <div className="absolute right-0 mt-2 w-48 bg-white text-gray-700 rounded shadow-lg py-2 z-10">
+                  <Link to="/profile" className="block px-4 py-2 hover:bg-gray-100">Account</Link>
+                  <Link to="/change-password" className="block px-4 py-2 hover:bg-gray-100">Reset Password</Link>
+                  <button onClick={handleLogout} className="w-full text-left block px-4 py-2 hover:bg-gray-100">Logout</button>
+                </div>
+              </details>
             </div>
           </div>
         </div>

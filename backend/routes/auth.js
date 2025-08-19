@@ -217,7 +217,7 @@ router.get('/profile', verifyToken, async (req, res) => {
   try {
     // Get fresh user data
     const [users] = await pool.execute(
-      'SELECT id, staff_number, first_name, last_name, email, is_admin, is_host_admin, notify, total_recall_hours, last_recall_date, created_at, password_hash FROM users WHERE id = ?',
+      'SELECT id, staff_number, first_name, last_name, station, phone, email, is_admin, is_host_admin, notify, total_recall_hours, last_recall_date, created_at, password_hash FROM users WHERE id = ?',
       [req.user.id]
     );
 
@@ -238,15 +238,20 @@ router.get('/profile', verifyToken, async (req, res) => {
 // Update profile settings
 router.put('/profile', verifyToken, async (req, res) => {
   try {
-    const { notify } = req.body;
+    const { notify, station, phone, email } = req.body;
 
     if (typeof notify !== 'boolean') {
       return res.status(400).json({ error: 'Notify setting must be boolean' });
     }
 
+    // Validate email
+    if (email && !/^[^@\s]+@fire\.nsw\.gov\.au$/i.test(email)) {
+      return res.status(400).json({ error: 'Email must be a @fire.nsw.gov.au address' });
+    }
+
     await pool.execute(
-      'UPDATE users SET notify = ? WHERE id = ?',
-      [notify, req.user.id]
+      'UPDATE users SET notify = ?, station = COALESCE(?, station), phone = COALESCE(?, phone), email = COALESCE(?, email) WHERE id = ?',
+      [notify, station || null, phone || null, email || null, req.user.id]
     );
 
     res.json({ message: 'Profile updated successfully' });
