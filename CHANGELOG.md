@@ -1,5 +1,26 @@
 # FRNSW Recalls 90 - Changelog
 
+## Version 1.0.5 (2025-01-27)
+
+### ⚡ Performance Improvements
+- **SELinux Context Optimization**: Dramatically improved deployment speed
+  - **Problem**: `restorecon -Rv` command was taking a very long time during deployment
+  - **Solution**: Replaced slow recursive operations with targeted context setting on build directory only
+  - **Files Changed**: `deploy-frnswrecall90.sh`
+
+- **File Permissions Optimization**: Faster permission setting
+  - **Problem**: `find -exec` commands were processing entire frontend directory tree
+  - **Solution**: Limited operations to build directory with `-maxdepth 3` for faster processing
+  - **Files Changed**: `deploy-frnswrecall90.sh`
+
+### 🔧 Technical Details
+- Replaced `restorecon -Rv /var/www/frnsw/frontend` with targeted `chcon` commands
+- Limited file permission operations to `/var/www/frnsw/frontend/build` directory only
+- Added `-maxdepth 3` to find commands to prevent deep recursion
+- Maintained fallback behavior for edge cases
+
+---
+
 ## Version 1.0.4 (2025-01-27)
 
 ### 🏢 Staff Management

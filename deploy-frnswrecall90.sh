@@ -339,7 +339,7 @@ JWT_SECRET='${JWT_SECRET}'
 APP_URL=http://${DOMAIN_NAME}
 PORT=3001
 NODE_ENV=production
-REACT_APP_VERSION=${REACT_APP_VERSION:-1.04}
+REACT_APP_VERSION=${REACT_APP_VERSION:-1.05}
 
 # Email Configuration (defaults set for InteractiveWebs relay)
 SMTP_HOST='${SMTP_HOST:-mail.interactivewebs.com}'
@@ -453,18 +453,61 @@ print_info "Cleanup completed"
 # Set proper ownership
 chown -R frnsw:frnsw /var/www/frnsw
 
-# Ensure SELinux contexts allow nginx to read static assets (AlmaLinux/RHEL)
+# Ensure SELinux contexts allow nginx to read static assets (AlmaLinux/RHEL) - OPTIMIZED
 if command -v getenforce >/dev/null 2>&1 && [ "$(getenforce)" != "Disabled" ]; then
   print_info "Setting SELinux context for web content..."
-  chcon -R -t httpd_sys_content_t /var/www/frnsw/frontend 2>/dev/null || true
-  restorecon -Rv /var/www/frnsw/frontend >/dev/null 2>&1 || true
+  
+  # Fast method: Set context only on the build directory and key files
+  if [ -d "/var/www/frnsw/frontend/build" ]; then
+    # Set context on build directory only (much faster than recursive)
+    chcon -R -t httpd_sys_content_t /var/www/frnsw/frontend/build 2>/dev/null || true
+    
+    # Set context on specific key files/directories only
+    chcon -t httpd_sys_content_t /var/www/frnsw/frontend/build/index.html 2>/dev/null || true
+    chcon -t httpd_sys_content_t /var/www/frnsw/frontend/build/manifest.json 2>/dev/null || true
+    chcon -t httpd_sys_content_t /var/www/frnsw/frontend/build/asset-manifest.json 2>/dev/null || true
+    
+    # Set context on static directories only if they exist
+    if [ -d "/var/www/frnsw/frontend/build/static" ]; then
+      chcon -R -t httpd_sys_content_t /var/www/frnsw/frontend/build/static 2>/dev/null || true
+    fi
+    
+    # Set context on icons directory only if it exists
+    if [ -d "/var/www/frnsw/frontend/build/icons" ]; then
+      chcon -R -t httpd_sys_content_t /var/www/frnsw/frontend/build/icons 2>/dev/null || true
+    fi
+    
+    print_status "SELinux context set on build directory (optimized)"
+  else
+    # Fallback: only if build directory doesn't exist
+    chcon -R -t httpd_sys_content_t /var/www/frnsw/frontend 2>/dev/null || true
+    print_warning "Build directory not found, set context on entire frontend directory"
+  fi
+  
+  # Skip the slow restorecon -Rv command entirely
+  # restorecon -Rv /var/www/frnsw/frontend >/dev/null 2>&1 || true
 fi
 
-# Ensure permissive file permissions for web content
+# Ensure permissive file permissions for web content - OPTIMIZED
 chmod 755 /var/www || true
 chmod 755 /var/www/frnsw || true
-find /var/www/frnsw/frontend -type d -exec chmod 755 {} \; 2>/dev/null || true
-find /var/www/frnsw/frontend -type f -exec chmod 644 {} \; 2>/dev/null || true
+
+# Fast method: Set permissions only on build directory
+if [ -d "/var/www/frnsw/frontend/build" ]; then
+  # Set permissions on build directory only (much faster)
+  chmod 755 /var/www/frnsw/frontend/build 2>/dev/null || true
+  
+  # Use faster find with -maxdepth to limit recursion
+  find /var/www/frnsw/frontend/build -maxdepth 3 -type d -exec chmod 755 {} \; 2>/dev/null || true
+  find /var/www/frnsw/frontend/build -maxdepth 3 -type f -exec chmod 644 {} \; 2>/dev/null || true
+  
+  print_status "File permissions set on build directory (optimized)"
+else
+  # Fallback: only if build directory doesn't exist
+  find /var/www/frnsw/frontend -type d -exec chmod 755 {} \; 2>/dev/null || true
+  find /var/www/frnsw/frontend -type f -exec chmod 644 {} \; 2>/dev/null || true
+  print_warning "Build directory not found, set permissions on entire frontend directory"
+fi
 
 # Also ensure nginx user can traverse parent dirs even if umask changed
 if id nginx >/dev/null 2>&1; then
