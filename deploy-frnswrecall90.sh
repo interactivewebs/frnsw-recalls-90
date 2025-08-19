@@ -339,7 +339,7 @@ JWT_SECRET='${JWT_SECRET}'
 APP_URL=http://${DOMAIN_NAME}
 PORT=3001
 NODE_ENV=production
-REACT_APP_VERSION=${REACT_APP_VERSION:-1.02}
+REACT_APP_VERSION=${REACT_APP_VERSION:-1.03}
 
 # Email Configuration (defaults set for InteractiveWebs relay)
 SMTP_HOST='${SMTP_HOST:-mail.interactivewebs.com}'

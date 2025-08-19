@@ -44,7 +44,12 @@ const Register = () => {
         navigate('/login');
       }, 3000);
     } catch (err) {
-      setError(err.message || 'Registration failed');
+      console.error('Registration error:', err);
+      const errorMessage = err.response?.data?.error || 
+                          err.response?.data?.errors?.[0]?.msg || 
+                          err.message || 
+                          'Registration failed';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

@@ -1,5 +1,25 @@
 # FRNSW Recalls 90 - Changelog
 
+## Version 1.0.3 (2025-01-27)
+
+### 🐛 Bug Fixes
+- **User Registration Debugging**: Added comprehensive logging and error handling
+  - **Problem**: Registration failing with 400 error but unclear cause
+  - **Solution**: Added detailed console logging in backend and improved frontend error display
+  - **Files Changed**: `backend/routes/auth.js`, `frontend/src/pages/Auth/Register.js`
+
+- **Approved Staff Check**: Temporarily relaxed for testing
+  - **Problem**: Users not in approved_staff table cannot register
+  - **Solution**: Temporarily disabled the check to allow testing (marked with TODO for production)
+  - **Files Changed**: `backend/routes/auth.js`
+
+### 🔧 Development
+- Enhanced error logging for registration process
+- Improved frontend error message display
+- Added console logging for debugging registration flow
+
+---
+
 ## Version 1.0.2 (2025-01-27)
 
 ### 🐛 Bug Fixes
