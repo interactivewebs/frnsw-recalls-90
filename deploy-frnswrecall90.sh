@@ -609,9 +609,9 @@ sudo -u frnsw pm2 logs frnsw-recalls-90 --lines 20 | tail -n +1 || true
     # Wait for backend to report healthy
     if wait_for_backend; then
         APP_HEALTHY=true
-    else
+else
         APP_HEALTHY=false
-    fi
+fi
 
 # Configure Nginx
 print_info "Configuring Nginx..."
@@ -639,6 +639,10 @@ server {
     # Serve frontend (SPA)
     root /var/www/frnsw/frontend/build;
     index index.html;
+
+    # Legacy route redirects
+    location = /dashboard { return 301 /; }
+    location = /dashboard/ { return 301 /; }
 
     # Primary route: static files or SPA index.html
     location / {
