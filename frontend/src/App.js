@@ -114,80 +114,94 @@ function App() {
             path="/"
             element={
               <ProtectedRoute>
-                <Layout />
+                <Layout>
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <Dashboard />
+                  </Suspense>
+                </Layout>
               </ProtectedRoute>
             }
-          >
-            {/* Dashboard */}
-            <Route
-              index
-              element={
-                <Suspense fallback={<LoadingSpinner />}>
-                  <Dashboard />
-                </Suspense>
-              }
-            />
+          />
 
-            {/* Recalls */}
-            <Route
-              path="recalls"
-              element={
-                <Suspense fallback={<LoadingSpinner />}>
-                  <Recalls />
-                </Suspense>
-              }
-            />
-            <Route
-              path="recalls/:id"
-              element={
-                <Suspense fallback={<LoadingSpinner />}>
-                  <RecallDetail />
-                </Suspense>
-              }
-            />
-
-            {/* Calendar */}
-            <Route
-              path="calendar"
-              element={
-                <Suspense fallback={<LoadingSpinner />}>
-                  <Calendar />
-                </Suspense>
-              }
-            />
-
-            {/* Reports */}
-            <Route
-              path="reports"
-              element={
-                <Suspense fallback={<LoadingSpinner />}>
-                  <Reports />
-                </Suspense>
-              }
-            />
-
-            {/* Profile */}
-            <Route
-              path="profile"
-              element={
-                <Suspense fallback={<LoadingSpinner />}>
-                  <Profile />
-                </Suspense>
-              }
-            />
-
-            {/* Admin routes */}
-            <Route
-              path="admin/*"
-              element={
-                <AdminRoute>
+          <Route
+            path="/recalls"
+            element={
+              <ProtectedRoute>
+                <Layout>
                   <Suspense fallback={<LoadingSpinner />}>
-                    <AdminPanel />
+                    <Recalls />
                   </Suspense>
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/recalls/:id"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <RecallDetail />
+                  </Suspense>
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/calendar"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <Calendar />
+                  </Suspense>
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/reports"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <Reports />
+                  </Suspense>
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <Profile />
+                  </Suspense>
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/*"
+            element={
+              <ProtectedRoute>
+                <AdminRoute>
+                  <Layout>
+                    <Suspense fallback={<LoadingSpinner />}>
+                      <AdminPanel />
+                    </Suspense>
+                  </Layout>
                 </AdminRoute>
-              }
-            />
-          </Route>
+              </ProtectedRoute>
+            }
+          />
 
           {/* Legacy path redirect: /dashboard -> / */}
           <Route path="/dashboard" element={<Navigate to="/" replace />} />
