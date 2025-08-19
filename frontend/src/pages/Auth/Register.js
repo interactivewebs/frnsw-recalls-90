@@ -11,7 +11,7 @@ const Register = () => {
     confirm_password: '',
     phone: '',
     station: '',
-    employee_id: ''
+    staffNumber: ''
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -153,12 +153,12 @@ const Register = () => {
               </div>
               <div>
                 <input
-                  name="employee_id"
-                  type="text"
+                  name="staffNumber"
+                  type="number"
                   required
                   className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-frnsw-red focus:border-frnsw-red sm:text-sm"
-                  placeholder="Employee ID"
-                  value={formData.employee_id}
+                  placeholder="Staff Number"
+                  value={formData.staffNumber}
                   onChange={handleChange}
                 />
               </div>
