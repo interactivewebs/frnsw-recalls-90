@@ -189,22 +189,6 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // Refresh user profile
-  const refreshProfile = useCallback(async () => {
-    try {
-      const userData = await authService.getProfile();
-      setUser(userData);
-      return userData;
-    } catch (error) {
-      console.error('Profile refresh failed:', error);
-      // If profile refresh fails, user might be logged out
-      if (error.response?.status === 401) {
-        logout();
-      }
-      throw error;
-    }
-  }, [logout]);
-
   // Check if user has admin privileges
   const isAdmin = useCallback(() => {
     return user?.is_admin === true;
