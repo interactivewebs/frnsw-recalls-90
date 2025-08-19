@@ -14,7 +14,8 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const from = location.state?.from?.pathname || '/dashboard';
+  // After login, send to the originally requested route or default to root
+  const from = location.state?.from?.pathname || '/';
 
   const handleChange = (e) => {
     setFormData({
