@@ -77,7 +77,7 @@ app.use(limiter);
 // Auth rate limiting
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 5, // limit each IP to 5 auth requests per windowMs
+  max: 50, // limit each IP to 50 auth requests per windowMs (increased for testing)
   skipSuccessfulRequests: true
 });
 

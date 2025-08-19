@@ -1,5 +1,20 @@
 # FRNSW Recalls 90 - Changelog
 
+## Version 1.0.8 (2025-01-27)
+
+### 🔧 Rate Limiting Fix
+- **Increased Auth Rate Limit**: Fixed 429 "Too Many Requests" error
+  - **Problem**: Auth rate limit was set to only 5 requests per 15 minutes, causing 429 errors during testing
+  - **Solution**: Increased auth rate limit from 5 to 50 requests per 15 minutes for testing
+  - **Files Changed**: `backend/server.js`
+
+### 🔧 Technical Details
+- Changed `max: 5` to `max: 50` in auth rate limiter configuration
+- This allows more registration attempts during testing and debugging
+- Rate limit can be adjusted back to lower value for production
+
+---
+
 ## Version 1.0.7 (2025-01-27)
 
 ### 🔍 Debugging & Investigation
