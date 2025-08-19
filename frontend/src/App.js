@@ -14,6 +14,7 @@ const Login = React.lazy(() => import('./pages/Auth/Login'));
 const Register = React.lazy(() => import('./pages/Auth/Register'));
 const VerifyEmail = React.lazy(() => import('./pages/Auth/VerifyEmail'));
 const ResetPassword = React.lazy(() => import('./pages/Auth/ResetPassword'));
+const ChangePassword = React.lazy(() => import('./pages/Auth/ChangePassword'));
 const Dashboard = React.lazy(() => import('./pages/Dashboard/Dashboard'));
 const Recalls = React.lazy(() => import('./pages/Recalls/Recalls'));
 const RecallDetail = React.lazy(() => import('./pages/Recalls/RecallDetail'));
@@ -96,6 +97,14 @@ function App() {
             element={
               <Suspense fallback={<LoadingSpinner />}>
                 <ResetPassword />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/change-password"
+            element={
+              <Suspense fallback={<LoadingSpinner />}>
+                <ChangePassword />
               </Suspense>
             }
           />

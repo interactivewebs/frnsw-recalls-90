@@ -176,6 +176,9 @@ router.post('/login', loginValidation, async (req, res) => {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
+    // Determine if user must change password (using default seeded password)
+    const mustChangePassword = await bcrypt.compare('TestPass123', user.password_hash);
+
     // Generate JWT token
     const token = jwt.sign(
       { 
@@ -200,7 +203,7 @@ router.post('/login', loginValidation, async (req, res) => {
     res.json({
       message: 'Login successful',
       token,
-      user: userData
+      user: { ...userData, must_change_password: mustChangePassword }
     });
 
   } catch (error) {
@@ -214,7 +217,7 @@ router.get('/profile', verifyToken, async (req, res) => {
   try {
     // Get fresh user data
     const [users] = await pool.execute(
-      'SELECT id, staff_number, first_name, last_name, email, is_admin, is_host_admin, notify, total_recall_hours, last_recall_date, created_at FROM users WHERE id = ?',
+      'SELECT id, staff_number, first_name, last_name, email, is_admin, is_host_admin, notify, total_recall_hours, last_recall_date, created_at, password_hash FROM users WHERE id = ?',
       [req.user.id]
     );
 
@@ -222,7 +225,9 @@ router.get('/profile', verifyToken, async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    res.json({ user: users[0] });
+    const mustChangePassword = await bcrypt.compare('TestPass123', users[0].password_hash);
+    const { password_hash, ...safeUser } = users[0];
+    res.json({ user: { ...safeUser, must_change_password: mustChangePassword } });
 
   } catch (error) {
     console.error('Profile fetch error:', error);

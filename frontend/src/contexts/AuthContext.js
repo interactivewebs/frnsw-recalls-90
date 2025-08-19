@@ -52,7 +52,7 @@ export const AuthProvider = ({ children }) => {
       // Store token
       localStorage.setItem('authToken', response.token);
       
-      // Set user data
+      // Set user data (may include must_change_password)
       setUser(response.user);
       setIsAuthenticated(true);
       
