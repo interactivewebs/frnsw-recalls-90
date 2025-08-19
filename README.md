@@ -1,4 +1,4 @@
-# FRNSW Recalls 90 (v1.0)
+# FRNSW Recalls 90 (v1.0.2)
 
 **Fire and Rescue NSW - Menai Station 90 Recall Management System**
 
@@ -49,6 +49,16 @@ FRNSW Recalls 90 is designed specifically for Fire and Rescue NSW Menai Station 
 - **MySQL**: Version 8.0 or higher (or MariaDB)
 - **SSL Certificate**: For production deployment
 - **Domain**: Configured for frnswrecall90.interactivewebs.com
+
+## 📝 Changelog
+
+For detailed information about changes, bug fixes, and new features, see [CHANGELOG.md](./CHANGELOG.md).
+
+**Recent Updates (v1.0.2)**:
+- Fixed user registration field mapping issues
+- Expanded approved staff list for testing
+- Improved deployment script permissions
+- Added comprehensive changelog for AI coder collaboration
 
 ## 🚀 Installation
 

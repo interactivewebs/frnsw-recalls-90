@@ -1,0 +1,145 @@
+# FRNSW Recalls 90 - Changelog
+
+## Version 1.0.2 (2025-01-27)
+
+### 🐛 Bug Fixes
+- **User Registration 400 Error**: Fixed field name mapping between frontend and backend
+  - **Problem**: Frontend form used `first_name`, `last_name`, `employee_id` but backend expected `firstName`, `lastName`, `staffNumber`
+  - **Solution**: Updated `frontend/src/services/authService.js` to map field names correctly
+  - **Files Changed**: `frontend/src/services/authService.js`, `frontend/src/pages/Auth/Register.js`
+
+- **Staff Number Field Type**: Changed from text to number input
+  - **Problem**: Backend validation expected integer for `staffNumber` but frontend sent string
+  - **Solution**: Updated input type to `number` and renamed field from `employee_id` to `staffNumber`
+  - **Files Changed**: `frontend/src/pages/Auth/Register.js`
+
+- **Limited Approved Staff List**: Expanded approved staff entries for testing
+  - **Problem**: Only 4 entries in `approved_staff` table, preventing most users from registering
+  - **Solution**: Added 50+ common names to allow broader testing
+  - **Files Changed**: `database/schema.sql`
+
+### 📝 Documentation
+- Created comprehensive changelog for AI coder collaboration
+- Added detailed commit messages with context and reasoning
+
+---
+
+## Version 1.0.1 (2025-01-27)
+
+### 🔧 Infrastructure
+- **Deploy Script Permissions**: Fixed executable permissions for deployment script
+  - **Problem**: `deploy-frnswrecall90.sh` not executable after git clone
+  - **Solution**: Made script executable in repository and added `chmod +x` fallback
+  - **Files Changed**: `deploy-frnswrecall90.sh`
+
+### 📦 Version Management
+- Updated version numbers across all package files
+- Added `REACT_APP_VERSION` environment variable for consistent versioning
+
+---
+
+## Version 1.0.0 (2025-01-27)
+
+### 🚀 Initial Release
+- Complete FRNSW Recalls 90 application deployment
+- Full-stack Node.js/React application with MySQL backend
+- Automated deployment script with PM2, Nginx, and SSL
+- User authentication and authorization system
+- Recall management functionality
+
+### 🔧 Key Features
+- **Authentication**: JWT-based auth with email verification
+- **Database**: MySQL with comprehensive schema for recalls and users
+- **Frontend**: React SPA with responsive design
+- **Backend**: Express.js API with validation and security
+- **Deployment**: Automated script for AlmaLinux server setup
+
+---
+
+## AI Coder Instructions
+
+### When Making Changes:
+
+1. **Update Version Numbers**:
+   ```bash
+   # Update these files with new version
+   - deploy-frnswrecall90.sh (REACT_APP_VERSION)
+   - frontend/package.json (version)
+   - backend/package.json (version)
+   ```
+
+2. **Document Changes**:
+   - Add entry to `CHANGELOG.md` with:
+     - Version number and date
+     - Category (🐛 Bug Fixes, ✨ Features, 🔧 Infrastructure, etc.)
+     - Problem description
+     - Solution explanation
+     - Files changed
+
+3. **Commit with Context**:
+   ```bash
+   git add .
+   git commit -m "Version X.X.X: Brief description
+
+   - Problem: Detailed explanation of what was wrong
+   - Solution: How it was fixed
+   - Files: List of key files changed
+   - Testing: What to test after deployment"
+   git push origin main
+   ```
+
+4. **Test After Deployment**:
+   - Always test the specific functionality that was changed
+   - Verify no regressions in existing features
+   - Check both frontend and backend functionality
+
+### Common Issues and Solutions:
+
+#### Registration Issues:
+- Check field name mapping between frontend and backend
+- Verify `approved_staff` table has appropriate entries
+- Ensure email domain validation (`@fire.nsw.gov.au`)
+
+#### Deployment Issues:
+- Script permissions: `chmod +x deploy-frnswrecall90.sh`
+- Database connection: Check MySQL user permissions
+- Frontend build: Verify `npm run build` completes successfully
+
+#### Authentication Issues:
+- JWT secret configuration
+- Email verification setup
+- Password hashing compatibility
+
+### File Structure:
+```
+FRNSW Recalls 90/
+├── backend/           # Node.js/Express API
+├── frontend/          # React SPA
+├── database/          # MySQL schema and migrations
+├── deploy-frnswrecall90.sh  # Main deployment script
+├── CHANGELOG.md       # This file - keep updated!
+└── README.md          # Project documentation
+```
+
+### Deployment Commands:
+```bash
+# Fresh deployment
+cd /tmp && rm -rf frnsw-deploy \
+&& git clone https://github.com/interactivewebs/frnsw-recalls-90.git frnsw-deploy \
+&& cd frnsw-deploy && ./deploy-frnswrecall90.sh
+
+# Database reset (if needed)
+DB_RESET=true ./deploy-frnswrecall90.sh
+```
+
+### Testing URLs:
+- Main app: https://frnswrecall90.interactivewebs.com
+- Health check: https://frnswrecall90.interactivewebs.com/health
+- API status: https://frnswrecall90.interactivewebs.com/api/status
+- Login: https://frnswrecall90.interactivewebs.com/login
+- Register: https://frnswrecall90.interactivewebs.com/register
+
+### Default Admin Credentials:
+- Email: david.finley@fire.nsw.gov.au
+- Password: TestPass123
+- Staff Number: 1001
