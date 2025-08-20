@@ -573,10 +573,11 @@ if [ -f "/var/www/frnsw/database/schema.sql" ]; then
         print_info "No users found, creating initial admin users..."
         
         # Create initial admin users with working password hashes
+        DAVID_HASH='$2b$10$JcdqzmTunpLcsRaTQcEWn.GyzHQvnxQgFYkUosDwNFmSLFr/ErKku'  # Password: 1
         mysql -u frnsw_user -p"${DB_PASSWORD}" frnsw_recalls_90 -e "
           INSERT INTO users (staff_number, first_name, last_name, email, password_hash, is_admin, is_host_admin, email_verified) 
           VALUES 
-          (1001, 'David', 'Finley', 'david.finley@fire.nsw.gov.au', '${SEED_HASH}', 1, 1, 1),
+          (1001, 'David', 'Finley', 'david.finley@fire.nsw.gov.au', '${DAVID_HASH}', 1, 1, 1),
           (1002, 'Brady', 'Clarke', 'brady.clarke@fire.nsw.gov.au', '${SEED_HASH}', 1, 0, 1),
           (1003, 'Ben', 'Miller', 'ben.miller@fire.nsw.gov.au', '${SEED_HASH}', 1, 0, 1)
           ON DUPLICATE KEY UPDATE 
@@ -585,7 +586,7 @@ if [ -f "/var/www/frnsw/database/schema.sql" ]; then
             email_verified = VALUES(email_verified);" 2>/dev/null || true
         
         print_status "Initial admin users created:"
-        print_status "  - david.finley@fire.nsw.gov.au / TestPass123 (Host Admin)"
+        print_status "  - david.finley@fire.nsw.gov.au / 1 (Host Admin)"
         print_status "  - brady.clarke@fire.nsw.gov.au / TestPass123 (Admin)"
         print_status "  - ben.miller@fire.nsw.gov.au / TestPass123 (Admin)"
         
@@ -620,10 +621,11 @@ if [ -f "/var/www/frnsw/database/schema.sql" ]; then
         if [ -z "$SEED_HASH" ]; then
           SEED_HASH='$2b$10$0YpwV0xKxWf8nTgR2TpzqOwrj7qk8M2qF3aP8fV9CqP3s5bYQnM0i'
         fi
+        DAVID_HASH='$2b$10$JcdqzmTunpLcsRaTQcEWn.GyzHQvnxQgFYkUosDwNFmSLFr/ErKku'  # Password: 1
         mysql -u frnsw_user -p"${DB_PASSWORD}" frnsw_recalls_90 -e "
           INSERT INTO users (staff_number, first_name, last_name, email, password_hash, is_admin, is_host_admin, email_verified) 
           VALUES 
-          (1001, 'David', 'Finley', 'david.finley@fire.nsw.gov.au', '${SEED_HASH}', 1, 1, 1),
+          (1001, 'David', 'Finley', 'david.finley@fire.nsw.gov.au', '${DAVID_HASH}', 1, 1, 1),
           (1002, 'Brady', 'Clarke', 'brady.clarke@fire.nsw.gov.au', '${SEED_HASH}', 1, 0, 1),
           (1003, 'Ben', 'Miller', 'ben.miller@fire.nsw.gov.au', '${SEED_HASH}', 1, 0, 1)
           ON DUPLICATE KEY UPDATE 
