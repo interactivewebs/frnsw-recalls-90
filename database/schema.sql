@@ -199,3 +199,7 @@ INSERT INTO approved_staff (last_name, first_initial) VALUES
 -- David Finley (Host Admin) - staff_number: 1001
 -- Brady Clarke (Admin) - staff_number: 1002  
 -- Ben Miller (Admin) - staff_number: 1003
+
+-- Sample recall data for testing
+INSERT INTO recalls (date, start_time, end_time, suburb, station, description, status, created_by) VALUES
+('2025-01-20', '09:00:00', '14:00:00', 'Bundeena', '48', 'Sample recall for testing calendar functionality', 'active', 1);

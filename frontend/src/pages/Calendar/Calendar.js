@@ -1,11 +1,217 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
 
 const Calendar = () => {
+  const { user } = useAuth();
+  const [recalls, setRecalls] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [currentDate, setCurrentDate] = useState(new Date());
+
+  // Sample recall data (in a real app, this would come from an API)
+  const sampleRecalls = [
+    {
+      id: 1,
+      date: '2025-01-20',
+      start_time: '09:00:00',
+      end_time: '14:00:00',
+      suburb: 'Bundeena',
+      station: '48',
+      description: 'Sample recall for testing calendar functionality',
+      status: 'active'
+    }
+  ];
+
+  useEffect(() => {
+    // Simulate API call
+    setTimeout(() => {
+      setRecalls(sampleRecalls);
+      setLoading(false);
+    }, 500);
+  }, []);
+
+  const formatTime = (timeString) => {
+    return timeString.substring(0, 5); // Convert "09:00:00" to "09:00"
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-AU', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const getDaysInMonth = (date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDay = firstDay.getDay();
+    
+    const days = [];
+    
+    // Add empty cells for days before the first of the month
+    for (let i = 0; i < startingDay; i++) {
+      days.push(null);
+    }
+    
+    // Add all days of the month
+    for (let i = 1; i <= daysInMonth; i++) {
+      days.push(new Date(year, month, i));
+    }
+    
+    return days;
+  };
+
+  const getRecallsForDate = (date) => {
+    if (!date) return [];
+    const dateString = date.toISOString().split('T')[0];
+    return recalls.filter(recall => recall.date === dateString);
+  };
+
+  const goToPreviousMonth = () => {
+    setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+  };
+
+  const goToNextMonth = () => {
+    setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+  };
+
+  const goToToday = () => {
+    setCurrentDate(new Date());
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold text-gray-900">Recall Calendar</h1>
+        <div className="bg-white shadow rounded-lg p-6">
+          <div className="animate-pulse">
+            <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
+            <div className="h-64 bg-gray-200 rounded"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const days = getDaysInMonth(currentDate);
+  const monthName = currentDate.toLocaleDateString('en-AU', { month: 'long', year: 'numeric' });
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-gray-900">Recall Calendar</h1>
+      
+      {/* Calendar Navigation */}
       <div className="bg-white shadow rounded-lg p-6">
-        <p className="text-gray-600">Calendar functionality will be implemented here.</p>
+        <div className="flex items-center justify-between mb-6">
+          <button
+            onClick={goToPreviousMonth}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          
+          <h2 className="text-xl font-semibold text-gray-900">{monthName}</h2>
+          
+          <button
+            onClick={goToNextMonth}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9l-7 7-7-7" />
+            </svg>
+          </button>
+        </div>
+        
+        <button
+          onClick={goToToday}
+          className="mb-4 px-4 py-2 bg-frnsw-red text-white rounded-lg hover:bg-red-700 transition-colors"
+        >
+          Today
+        </button>
+
+        {/* Calendar Grid */}
+        <div className="grid grid-cols-7 gap-px bg-gray-200 border border-gray-200 rounded-lg overflow-hidden">
+          {/* Day headers */}
+          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+            <div key={day} className="bg-gray-50 p-3 text-center text-sm font-medium text-gray-700">
+              {day}
+            </div>
+          ))}
+          
+          {/* Calendar days */}
+          {days.map((day, index) => {
+            const recallsForDay = getRecallsForDate(day);
+            const isToday = day && day.toDateString() === new Date().toDateString();
+            const isCurrentMonth = day && day.getMonth() === currentDate.getMonth();
+            
+            return (
+              <div
+                key={index}
+                className={`min-h-[100px] p-2 bg-white ${
+                  !day || !isCurrentMonth ? 'bg-gray-50 text-gray-400' : ''
+                } ${isToday ? 'ring-2 ring-frnsw-red' : ''}`}
+              >
+                {day && (
+                  <div className="text-sm font-medium mb-1">
+                    {day.getDate()}
+                  </div>
+                )}
+                
+                {/* Recalls for this day */}
+                {recallsForDay.map(recall => (
+                  <div
+                    key={recall.id}
+                    className="text-xs p-1 mb-1 bg-frnsw-red text-white rounded truncate"
+                    title={`${recall.suburb} - Station ${recall.station} (${formatTime(recall.start_time)}-${formatTime(recall.end_time)})`}
+                  >
+                    {recall.suburb} - {formatTime(recall.start_time)}-{formatTime(recall.end_time)}
+                  </div>
+                ))}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Upcoming Recalls List */}
+      <div className="bg-white shadow rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Upcoming Recalls</h3>
+        {recalls.length === 0 ? (
+          <p className="text-gray-500">No upcoming recalls</p>
+        ) : (
+          <div className="space-y-3">
+            {recalls.map(recall => (
+              <div key={recall.id} className="border-l-4 border-frnsw-red pl-4 py-2">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h4 className="font-medium text-gray-900">{recall.suburb}</h4>
+                    <p className="text-sm text-gray-600">{formatDate(recall.date)}</p>
+                    <p className="text-sm text-gray-600">
+                      {formatTime(recall.start_time)} - {formatTime(recall.end_time)} (Station {recall.station})
+                    </p>
+                  </div>
+                  <span className={`px-2 py-1 text-xs rounded-full ${
+                    recall.status === 'active' ? 'bg-green-100 text-green-800' :
+                    recall.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {recall.status}
+                  </span>
+                </div>
+                {recall.description && (
+                  <p className="text-sm text-gray-600 mt-1">{recall.description}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
