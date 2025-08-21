@@ -18,6 +18,7 @@ const ChangePassword = React.lazy(() => import('./pages/Auth/ChangePassword'));
 const Dashboard = React.lazy(() => import('./pages/Dashboard/Dashboard'));
 const Recalls = React.lazy(() => import('./pages/Recalls/Recalls'));
 const RecallDetail = React.lazy(() => import('./pages/Recalls/RecallDetail'));
+const PastBids = React.lazy(() => import('./pages/Recalls/PastBids'));
 const Calendar = React.lazy(() => import('./pages/Calendar/Calendar'));
 const Reports = React.lazy(() => import('./pages/Reports/Reports'));
 const Profile = React.lazy(() => import('./pages/Profile/Profile'));
@@ -143,6 +144,19 @@ function App() {
                 <Layout>
                   <Suspense fallback={<LoadingSpinner />}>
                     <RecallDetail />
+                  </Suspense>
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/past-bids"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <PastBids />
                   </Suspense>
                 </Layout>
               </ProtectedRoute>

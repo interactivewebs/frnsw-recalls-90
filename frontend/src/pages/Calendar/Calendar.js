@@ -1,11 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { recallService } from '../../services/recallService';
+import toast from 'react-hot-toast';
 
 const Calendar = () => {
   const { user } = useAuth();
   const [recalls, setRecalls] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [showDateDetails, setShowDateDetails] = useState(false);
+  const [dateRecalls, setDateRecalls] = useState([]);
+  const [dateLoading, setDateLoading] = useState(false);
 
   // Sample recall data (in a real app, this would come from an API)
   const sampleRecalls = [
@@ -28,6 +34,26 @@ const Calendar = () => {
       setLoading(false);
     }, 500);
   }, []);
+
+  const handleDateClick = async (date) => {
+    if (!date) return;
+    
+    setSelectedDate(date);
+    setDateLoading(true);
+    setShowDateDetails(true);
+    
+    try {
+      const dateString = date.toISOString().split('T')[0];
+      const response = await recallService.getRecallsForDate(dateString);
+      setDateRecalls(response.recalls || []);
+    } catch (error) {
+      console.error('Error fetching recalls for date:', error);
+      toast.error('Failed to fetch recalls for this date');
+      setDateRecalls([]);
+    } finally {
+      setDateLoading(false);
+    }
+  };
 
   const formatTime = (timeString) => {
     return timeString.substring(0, 5); // Convert "09:00:00" to "09:00"
@@ -154,9 +180,10 @@ const Calendar = () => {
             return (
               <div
                 key={index}
-                className={`min-h-[100px] p-2 bg-white ${
-                  !day || !isCurrentMonth ? 'bg-gray-50 text-gray-400' : ''
+                className={`min-h-[100px] p-2 bg-white cursor-pointer hover:bg-gray-50 transition-colors ${
+                  !day || !isCurrentMonth ? 'bg-gray-50 text-gray-400 cursor-default' : ''
                 } ${isToday ? 'ring-2 ring-frnsw-red' : ''}`}
+                onClick={() => day && isCurrentMonth && handleDateClick(day)}
               >
                 {day && (
                   <div className="text-sm font-medium mb-1">
@@ -168,8 +195,13 @@ const Calendar = () => {
                 {recallsForDay.map(recall => (
                   <div
                     key={recall.id}
-                    className="text-xs p-1 mb-1 bg-frnsw-red text-white rounded truncate"
+                    className="text-xs p-1 mb-1 bg-frnsw-red text-white rounded truncate cursor-pointer hover:bg-red-700"
                     title={`${recall.suburb} - Station ${recall.station} (${formatTime(recall.start_time)}-${formatTime(recall.end_time)})`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // Navigate to recall details
+                      window.location.href = `/recalls/${recall.id}`;
+                    }}
                   >
                     {recall.suburb} - {formatTime(recall.start_time)}-{formatTime(recall.end_time)}
                   </div>
@@ -213,6 +245,87 @@ const Calendar = () => {
           </div>
         )}
       </div>
+
+      {/* Date Details Modal */}
+      {showDateDetails && selectedDate && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-semibold text-gray-900">
+                  Recalls for {formatDate(selectedDate.toISOString().split('T')[0])}
+                </h3>
+                <button
+                  onClick={() => setShowDateDetails(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {dateLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-frnsw-red mx-auto"></div>
+                  <p className="mt-2 text-gray-600">Loading recalls...</p>
+                </div>
+              ) : dateRecalls.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No recalls scheduled for this date.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {dateRecalls.map(recall => (
+                    <div key={recall.id} className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="text-lg font-semibold text-gray-900">{recall.suburb}</h4>
+                        <span className={`px-2 py-1 text-xs rounded-full ${
+                          recall.status === 'active' ? 'bg-green-100 text-green-800' :
+                          recall.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {recall.status}
+                        </span>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4 text-sm text-gray-600 mb-3">
+                        <div>
+                          <span className="font-medium">Time:</span> {formatTime(recall.start_time)} - {formatTime(recall.end_time)}
+                        </div>
+                        <div>
+                          <span className="font-medium">Station:</span> {recall.station}
+                        </div>
+                      </div>
+                      
+                      {recall.description && (
+                        <p className="text-gray-700 mb-3">{recall.description}</p>
+                      )}
+                      
+                      <div className="flex justify-between items-center">
+                        <div className="text-sm text-gray-500">
+                          {recall.total_responses > 0 && (
+                            <span>{recall.total_responses} responses, {recall.total_bids} bids</span>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => {
+                            setShowDateDetails(false);
+                            window.location.href = `/recalls/${recall.id}`;
+                          }}
+                          className="px-4 py-2 bg-frnsw-red text-white rounded hover:bg-red-700 transition-colors"
+                        >
+                          View Details & Bid
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

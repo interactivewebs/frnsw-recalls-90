@@ -58,12 +58,12 @@ CREATE TABLE recalls (
     INDEX idx_created_by (created_by)
 );
 
--- Recall responses (available/not available)
+-- Recall responses (bidding system)
 CREATE TABLE recall_responses (
     id INT AUTO_INCREMENT PRIMARY KEY,
     recall_id INT NOT NULL,
     user_id INT NOT NULL,
-    response ENUM('available', 'not_available') NOT NULL,
+    response ENUM('bid', 'not_available', 'not_bid') NOT NULL DEFAULT 'not_bid',
     response_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     token VARCHAR(255) UNIQUE,
     FOREIGN KEY (recall_id) REFERENCES recalls(id) ON DELETE CASCADE,
@@ -74,17 +74,16 @@ CREATE TABLE recall_responses (
     INDEX idx_token (token)
 );
 
--- Recall assignments
+-- Recall assignments (awarded recalls)
 CREATE TABLE recall_assignments (
     id INT AUTO_INCREMENT PRIMARY KEY,
     recall_id INT NOT NULL,
     user_id INT NOT NULL,
     assigned_by INT NOT NULL,
     assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    is_manual_assignment BOOLEAN DEFAULT FALSE,
     assignment_note TEXT,
-    conflict_override BOOLEAN DEFAULT FALSE,
     hours DECIMAL(5,2) NOT NULL,
+    status ENUM('assigned', 'completed', 'cancelled') DEFAULT 'assigned',
     FOREIGN KEY (recall_id) REFERENCES recalls(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (assigned_by) REFERENCES users(id),
@@ -203,3 +202,30 @@ INSERT INTO approved_staff (last_name, first_initial) VALUES
 -- Sample recall data for testing
 INSERT INTO recalls (date, start_time, end_time, suburb, station, description, status, created_by) VALUES
 ('2025-08-31', '09:00:00', '14:00:00', 'Bundeena', '48', 'Sample recall for testing calendar functionality', 'active', 1);
+
+-- Function to calculate days since last recall for a user
+DELIMITER //
+CREATE FUNCTION get_days_since_last_recall(user_id_param INT) 
+RETURNS INT
+READS SQL DATA
+DETERMINISTIC
+BEGIN
+    DECLARE last_recall_date DATE;
+    DECLARE days_since INT;
+    
+    -- Get the most recent completed recall for this user
+    SELECT MAX(ra.assigned_at) INTO last_recall_date
+    FROM recall_assignments ra
+    WHERE ra.user_id = user_id_param 
+    AND ra.status = 'completed';
+    
+    -- If no completed recalls, return a large number (9999 days)
+    IF last_recall_date IS NULL THEN
+        RETURN 9999;
+    ELSE
+        -- Calculate days since last recall
+        SET days_since = DATEDIFF(CURDATE(), last_recall_date);
+        RETURN days_since;
+    END IF;
+END //
+DELIMITER ;

@@ -71,6 +71,16 @@ const Layout = ({ children }) => {
               >
                 Reports
               </Link>
+              <Link
+                to="/past-bids"
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  isActive('/past-bids')
+                    ? 'bg-red-700 text-white'
+                    : 'text-red-100 hover:bg-red-700 hover:text-white'
+                }`}
+              >
+                Past Bids
+              </Link>
               {user?.role === 'admin' && (
                 <Link
                   to="/admin"
