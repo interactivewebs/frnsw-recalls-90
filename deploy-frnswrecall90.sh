@@ -549,10 +549,10 @@ if [ -f "/var/www/frnsw/database/schema.sql" ]; then
       print_status "Database and user setup completed"
     else
       print_error "Cannot connect to MySQL at all - check if MySQL is running"
-      exit 1
+        exit 1
     fi
-  fi
-  
+fi
+
   # Import schema with better error handling
   if mysql -f -u frnsw_user -p"${DB_PASSWORD}" frnsw_recalls_90 < /var/www/frnsw/database/schema.sql; then
     print_status "Database schema imported successfully"
@@ -658,6 +658,22 @@ if [ -f "/var/www/frnsw/database/schema.sql" ]; then
             email_verified = 1;" 2>/dev/null || true
         
         print_status "FRNSW staff users ensured and verified"
+        
+        # Seed a sample recall for testing (idempotent)
+        print_info "Seeding sample recall for 2025-08-31 if missing..."
+        mysql -u frnsw_user -p"${DB_PASSWORD}" frnsw_recalls_90 -e "
+          INSERT INTO recalls (date, start_time, end_time, suburb, station, description, status, created_by)
+          SELECT '2025-08-31','09:00:00','14:00:00','Bundeena','48','Sample recall for testing calendar functionality','active', u.id
+          FROM users u
+          WHERE u.email='david.finley@fire.nsw.gov.au'
+          AND NOT EXISTS (
+            SELECT 1 FROM recalls r
+            WHERE r.date='2025-08-31'
+              AND r.start_time='09:00:00'
+              AND r.end_time='14:00:00'
+              AND r.suburb='Bundeena'
+              AND r.station='48'
+          );" 2>/dev/null || true
       fi
     else
       print_error "Database schema import failed - users table missing"
@@ -728,7 +744,7 @@ server {
     add_header X-XSS-Protection "1; mode=block";
     
     # Serve frontend (SPA)
-    root /var/www/frnsw/frontend/build;
+        root /var/www/frnsw/frontend/build;
     index index.html;
 
     # Legacy route redirects
@@ -743,9 +759,9 @@ server {
     # Cache headers for static assets
         location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
         try_files \$uri =404;
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-    }
+            expires 1y;
+            add_header Cache-Control "public, immutable";
+        }
 
     # Explicit aliases for common asset paths to avoid path/base issues
     location /static/ {
