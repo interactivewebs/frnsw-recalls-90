@@ -16,20 +16,7 @@ const Dashboard = () => {
           </p>
         </div>
       </div>
-      <div className="bg-white shadow rounded-lg p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <button className="bg-frnsw-red text-white px-4 py-3 rounded-md text-center hover:bg-red-700 transition-colors">
-            View All Recalls
-          </button>
-          <button className="bg-blue-600 text-white px-4 py-3 rounded-md text-center hover:bg-blue-700 transition-colors">
-            View Calendar
-          </button>
-          <button className="bg-green-600 text-white px-4 py-3 rounded-md text-center hover:bg-green-700 transition-colors">
-            View Reports
-          </button>
-        </div>
-      </div>
+      
     </div>
   );
 };

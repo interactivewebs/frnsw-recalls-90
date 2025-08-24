@@ -15,7 +15,39 @@ router.get('/', verifyToken, async (req, res) => {
         COUNT(rr.id) as total_responses,
         COUNT(CASE WHEN rr.response = 'bid' THEN 1 END) as total_bids,
         ra.user_id as assigned_user_id,
-        ra.status as assignment_status
+        ra.status as assignment_status,
+        (
+          SELECT u2.id
+          FROM users u2
+          LEFT JOIN recall_responses rr2 ON rr2.user_id = u2.id AND rr2.recall_id = r.id
+          WHERE rr2.response = 'bid' AND u2.email_verified = 1
+          ORDER BY get_days_since_last_recall(u2.id) DESC, u2.last_name ASC, u2.first_name ASC
+          LIMIT 1
+        ) as top_bidder_user_id,
+        (
+          SELECT u2.first_name
+          FROM users u2
+          LEFT JOIN recall_responses rr2 ON rr2.user_id = u2.id AND rr2.recall_id = r.id
+          WHERE rr2.response = 'bid' AND u2.email_verified = 1
+          ORDER BY get_days_since_last_recall(u2.id) DESC, u2.last_name ASC, u2.first_name ASC
+          LIMIT 1
+        ) as top_bidder_first_name,
+        (
+          SELECT u2.last_name
+          FROM users u2
+          LEFT JOIN recall_responses rr2 ON rr2.user_id = u2.id AND rr2.recall_id = r.id
+          WHERE rr2.response = 'bid' AND u2.email_verified = 1
+          ORDER BY get_days_since_last_recall(u2.id) DESC, u2.last_name ASC, u2.first_name ASC
+          LIMIT 1
+        ) as top_bidder_last_name,
+        (
+          SELECT get_days_since_last_recall(u2.id)
+          FROM users u2
+          LEFT JOIN recall_responses rr2 ON rr2.user_id = u2.id AND rr2.recall_id = r.id
+          WHERE rr2.response = 'bid' AND u2.email_verified = 1
+          ORDER BY get_days_since_last_recall(u2.id) DESC, u2.last_name ASC, u2.first_name ASC
+          LIMIT 1
+        ) as top_bidder_days_since
       FROM recalls r
       LEFT JOIN users u ON r.created_by = u.id
       LEFT JOIN recall_responses rr ON r.id = rr.recall_id
@@ -44,7 +76,39 @@ router.get('/date/:date', verifyToken, async (req, res) => {
         COUNT(rr.id) as total_responses,
         COUNT(CASE WHEN rr.response = 'bid' THEN 1 END) as total_bids,
         ra.user_id as assigned_user_id,
-        ra.status as assignment_status
+        ra.status as assignment_status,
+        (
+          SELECT u2.id
+          FROM users u2
+          LEFT JOIN recall_responses rr2 ON rr2.user_id = u2.id AND rr2.recall_id = r.id
+          WHERE rr2.response = 'bid' AND u2.email_verified = 1
+          ORDER BY get_days_since_last_recall(u2.id) DESC, u2.last_name ASC, u2.first_name ASC
+          LIMIT 1
+        ) as top_bidder_user_id,
+        (
+          SELECT u2.first_name
+          FROM users u2
+          LEFT JOIN recall_responses rr2 ON rr2.user_id = u2.id AND rr2.recall_id = r.id
+          WHERE rr2.response = 'bid' AND u2.email_verified = 1
+          ORDER BY get_days_since_last_recall(u2.id) DESC, u2.last_name ASC, u2.first_name ASC
+          LIMIT 1
+        ) as top_bidder_first_name,
+        (
+          SELECT u2.last_name
+          FROM users u2
+          LEFT JOIN recall_responses rr2 ON rr2.user_id = u2.id AND rr2.recall_id = r.id
+          WHERE rr2.response = 'bid' AND u2.email_verified = 1
+          ORDER BY get_days_since_last_recall(u2.id) DESC, u2.last_name ASC, u2.first_name ASC
+          LIMIT 1
+        ) as top_bidder_last_name,
+        (
+          SELECT get_days_since_last_recall(u2.id)
+          FROM users u2
+          LEFT JOIN recall_responses rr2 ON rr2.user_id = u2.id AND rr2.recall_id = r.id
+          WHERE rr2.response = 'bid' AND u2.email_verified = 1
+          ORDER BY get_days_since_last_recall(u2.id) DESC, u2.last_name ASC, u2.first_name ASC
+          LIMIT 1
+        ) as top_bidder_days_since
       FROM recalls r
       LEFT JOIN users u ON r.created_by = u.id
       LEFT JOIN recall_responses rr ON r.id = rr.recall_id

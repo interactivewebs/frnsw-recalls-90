@@ -1,34 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { recallService } from '../../services/recallService';
+import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 const Recalls = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [recalls, setRecalls] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all'); // all, active, upcoming, past
 
-  // Sample recall data (in a real app, this would come from an API)
-  const sampleRecalls = [
-    {
-      id: 1,
-      date: '2025-08-31',
-      start_time: '09:00:00',
-      end_time: '14:00:00',
-      suburb: 'Bundeena',
-      station: '48',
-      description: 'Sample recall for testing calendar functionality',
-      status: 'active',
-      created_by: 'David Finley',
-      created_at: '2025-01-15T10:00:00Z'
-    }
-  ];
-
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setRecalls(sampleRecalls);
-      setLoading(false);
-    }, 500);
+    const load = async () => {
+      try {
+        setLoading(true);
+        const response = await recallService.getAllRecalls();
+        setRecalls(response.recalls || []);
+      } catch (e) {
+        console.error(e);
+        toast.error('Failed to load recalls');
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
   }, []);
 
   const formatTime = (timeString) => {
@@ -210,7 +206,7 @@ const Recalls = () => {
                   </div>
                   
                   <div className="flex space-x-2 ml-4">
-                    <button className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors">
+                    <button onClick={() => navigate(`/recalls/${recall.id}`)} className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors">
                       View Details
                     </button>
                     {user?.is_admin && (

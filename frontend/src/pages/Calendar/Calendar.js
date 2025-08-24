@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { recallService } from '../../services/recallService';
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 
 const Calendar = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [recalls, setRecalls] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -13,26 +15,21 @@ const Calendar = () => {
   const [dateRecalls, setDateRecalls] = useState([]);
   const [dateLoading, setDateLoading] = useState(false);
 
-  // Sample recall data (in a real app, this would come from an API)
-  const sampleRecalls = [
-    {
-      id: 1,
-      date: '2025-08-31',
-      start_time: '09:00:00',
-      end_time: '14:00:00',
-      suburb: 'Bundeena',
-      station: '48',
-      description: 'Sample recall for testing calendar functionality',
-      status: 'active'
-    }
-  ];
-
+  // Load recalls from API
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setRecalls(sampleRecalls);
-      setLoading(false);
-    }, 500);
+    const loadRecalls = async () => {
+      try {
+        setLoading(true);
+        const response = await recallService.getAllRecalls();
+        setRecalls(response.recalls || []);
+      } catch (error) {
+        console.error('Error loading recalls:', error);
+        toast.error('Failed to load recalls');
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadRecalls();
   }, []);
 
   const handleDateClick = async (date) => {
@@ -199,8 +196,7 @@ const Calendar = () => {
                     title={`${recall.suburb} - Station ${recall.station} (${formatTime(recall.start_time)}-${formatTime(recall.end_time)})`}
                     onClick={(e) => {
                       e.stopPropagation();
-                      // Navigate to recall details
-                      window.location.href = `/recalls/${recall.id}`;
+                      navigate(`/recalls/${recall.id}`);
                     }}
                   >
                     {recall.suburb} - {formatTime(recall.start_time)}-{formatTime(recall.end_time)}
@@ -311,7 +307,7 @@ const Calendar = () => {
                         <button
                           onClick={() => {
                             setShowDateDetails(false);
-                            window.location.href = `/recalls/${recall.id}`;
+                            navigate(`/recalls/${recall.id}`);
                           }}
                           className="px-4 py-2 bg-frnsw-red text-white rounded hover:bg-red-700 transition-colors"
                         >
