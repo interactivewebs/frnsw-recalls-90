@@ -635,6 +635,31 @@ fi
             email_verified = 1;" 2>/dev/null || true
         
         print_status "Admin users ensured and verified"
+
+        # Ensure DB function for longest-since exists (drop/create idempotently)
+        print_info "Creating DB function get_days_since_last_recall..."
+        mysql -u frnsw_user -p"${DB_PASSWORD}" frnsw_recalls_90 <<'SQL'
+DELIMITER //
+DROP FUNCTION IF EXISTS get_days_since_last_recall;//
+CREATE FUNCTION get_days_since_last_recall(user_id_param INT)
+RETURNS INT
+READS SQL DATA
+DETERMINISTIC
+BEGIN
+    DECLARE last_recall_date DATE;
+    DECLARE days_since INT;
+    SELECT DATE(MAX(ra.assigned_at)) INTO last_recall_date
+    FROM recall_assignments ra
+    WHERE ra.user_id = user_id_param AND ra.status = 'completed';
+    IF last_recall_date IS NULL THEN
+        RETURN 9999;
+    ELSE
+        SET days_since = DATEDIFF(CURDATE(), last_recall_date);
+        RETURN days_since;
+    END IF;
+END;//
+DELIMITER ;
+SQL
         
         # Ensure FRNSW staff users exist and are verified
         print_info "Upserting FRNSW staff users..."
