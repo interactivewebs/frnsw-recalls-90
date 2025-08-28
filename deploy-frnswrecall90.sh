@@ -638,13 +638,18 @@ fi
 
         # Ensure DB function for longest-since exists (drop/create idempotently)
         print_info "Creating DB function get_days_since_last_recall..."
-        mysql -u frnsw_user -p"${DB_PASSWORD}" frnsw_recalls_90 <<'SQL'
+        # Allow function creation without SUPER when binlog enabled
+        mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "SET PERSIST log_bin_trust_function_creators = 1;" 2>/dev/null || \
+        mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "SET GLOBAL log_bin_trust_function_creators = 1;" 2>/dev/null || true
+        
+        mysql -u root -p"${MYSQL_ROOT_PASSWORD}" frnsw_recalls_90 <<'SQL'
 DELIMITER //
-DROP FUNCTION IF EXISTS get_days_since_last_recall;//
+DROP FUNCTION IF EXISTS get_days_since_last_recall//
 CREATE FUNCTION get_days_since_last_recall(user_id_param INT)
 RETURNS INT
-READS SQL DATA
 DETERMINISTIC
+READS SQL DATA
+SQL SECURITY INVOKER
 BEGIN
     DECLARE last_recall_date DATE;
     DECLARE days_since INT;
@@ -657,7 +662,7 @@ BEGIN
         SET days_since = DATEDIFF(CURDATE(), last_recall_date);
         RETURN days_since;
     END IF;
-END;//
+END//
 DELIMITER ;
 SQL
         
