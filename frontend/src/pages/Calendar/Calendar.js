@@ -56,14 +56,23 @@ const Calendar = () => {
     return timeString.substring(0, 5); // Convert "09:00:00" to "09:00"
   };
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
+  const formatDate = (value) => {
+    const date = value instanceof Date
+      ? value
+      : new Date(`${value}T00:00:00`); // force local midnight to avoid UTC shift
     return date.toLocaleDateString('en-AU', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
       day: 'numeric'
     });
+  };
+
+  const toLocalYmd = (d) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
   };
 
   const getDaysInMonth = (date) => {
@@ -91,7 +100,7 @@ const Calendar = () => {
 
   const getRecallsForDate = (date) => {
     if (!date) return [];
-    const dateString = date.toISOString().split('T')[0];
+    const dateString = toLocalYmd(date);
     return recalls.filter(recall => recall.date === dateString);
   };
 
