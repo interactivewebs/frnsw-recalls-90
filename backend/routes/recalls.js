@@ -14,8 +14,16 @@ router.get('/', verifyToken, async (req, res) => {
         u.last_name as creator_last_name,
         COUNT(rr.id) as total_responses,
         COUNT(CASE WHEN rr.response = 'bid' THEN 1 END) as total_bids,
-        ra.user_id as assigned_user_id,
-        ra.status as assignment_status,
+        (
+          SELECT ra2.user_id FROM recall_assignments ra2
+          WHERE ra2.recall_id = r.id
+          LIMIT 1
+        ) as assigned_user_id,
+        (
+          SELECT ra2.status FROM recall_assignments ra2
+          WHERE ra2.recall_id = r.id
+          LIMIT 1
+        ) as assignment_status,
         (
           SELECT u2.id
           FROM users u2
@@ -51,7 +59,6 @@ router.get('/', verifyToken, async (req, res) => {
       FROM recalls r
       LEFT JOIN users u ON r.created_by = u.id
       LEFT JOIN recall_responses rr ON r.id = rr.recall_id
-      LEFT JOIN recall_assignments ra ON r.id = ra.recall_id
       GROUP BY r.id
       ORDER BY r.date ASC, r.start_time ASC
     `);
@@ -75,8 +82,16 @@ router.get('/date/:date', verifyToken, async (req, res) => {
         u.last_name as creator_last_name,
         COUNT(rr.id) as total_responses,
         COUNT(CASE WHEN rr.response = 'bid' THEN 1 END) as total_bids,
-        ra.user_id as assigned_user_id,
-        ra.status as assignment_status,
+        (
+          SELECT ra2.user_id FROM recall_assignments ra2
+          WHERE ra2.recall_id = r.id
+          LIMIT 1
+        ) as assigned_user_id,
+        (
+          SELECT ra2.status FROM recall_assignments ra2
+          WHERE ra2.recall_id = r.id
+          LIMIT 1
+        ) as assignment_status,
         (
           SELECT u2.id
           FROM users u2
@@ -112,7 +127,6 @@ router.get('/date/:date', verifyToken, async (req, res) => {
       FROM recalls r
       LEFT JOIN users u ON r.created_by = u.id
       LEFT JOIN recall_responses rr ON r.id = rr.recall_id
-      LEFT JOIN recall_assignments ra ON r.id = ra.recall_id
       WHERE r.date = ?
       GROUP BY r.id
       ORDER BY r.start_time ASC
