@@ -214,7 +214,7 @@ BEGIN
     DECLARE days_since INT;
     
     -- Get the most recent completed recall for this user
-    SELECT MAX(ra.assigned_at) INTO last_recall_date
+    SELECT DATE(MAX(ra.assigned_at)) INTO last_recall_date
     FROM recall_assignments ra
     WHERE ra.user_id = user_id_param 
     AND ra.status = 'completed';

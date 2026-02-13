@@ -40,7 +40,7 @@ const Calendar = () => {
     setShowDateDetails(true);
     
     try {
-      const dateString = date.toISOString().split('T')[0];
+      const dateString = toLocalYmd(date);
       const response = await recallService.getRecallsForDate(dateString);
       setDateRecalls(response.recalls || []);
     } catch (error) {
@@ -79,7 +79,7 @@ const Calendar = () => {
     const year = date.getFullYear();
     const month = date.getMonth();
     const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month, 0);
+    const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
     const startingDay = firstDay.getDay();
     
@@ -258,7 +258,7 @@ const Calendar = () => {
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-xl font-semibold text-gray-900">
-                  Recalls for {formatDate(selectedDate.toISOString().split('T')[0])}
+                  Recalls for {formatDate(selectedDate)}
                 </h3>
                 <button
                   onClick={() => setShowDateDetails(false)}

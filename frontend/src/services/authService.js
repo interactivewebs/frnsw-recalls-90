@@ -42,7 +42,7 @@ apiClient.interceptors.response.use(
       const isOnAuthPage = authPages.some(page => currentPath.includes(page));
       
       if (!isOnAuthPage) {
-        window.location.href = '/FRNSWRecalls90/login';
+        window.location.href = '/login';
       }
     }
     
