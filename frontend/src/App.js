@@ -19,6 +19,7 @@ const Dashboard = React.lazy(() => import('./pages/Dashboard/Dashboard'));
 const Recalls = React.lazy(() => import('./pages/Recalls/Recalls'));
 const RecallDetail = React.lazy(() => import('./pages/Recalls/RecallDetail'));
 const PastBids = React.lazy(() => import('./pages/Recalls/PastBids'));
+const CreateRecall = React.lazy(() => import('./pages/Recalls/CreateRecall'));
 const Calendar = React.lazy(() => import('./pages/Calendar/Calendar'));
 const Reports = React.lazy(() => import('./pages/Reports/Reports'));
 const Profile = React.lazy(() => import('./pages/Profile/Profile'));
@@ -131,6 +132,19 @@ function App() {
                 <Layout>
                   <Suspense fallback={<LoadingSpinner />}>
                     <Recalls />
+                  </Suspense>
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/recalls/new"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <CreateRecall />
                   </Suspense>
                 </Layout>
               </ProtectedRoute>

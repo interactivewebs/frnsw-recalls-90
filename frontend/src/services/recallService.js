@@ -71,6 +71,28 @@ export const recallService = {
     }
   },
 
+  // Create new recall (admin only)
+  async createRecall(data) {
+    try {
+      const response = await apiClient.post('/recalls', data);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating recall:', error);
+      throw error;
+    }
+  },
+
+  // Update recall (admin only)
+  async updateRecall(recallId, data) {
+    try {
+      const response = await apiClient.put(`/recalls/${recallId}`, data);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating recall:', error);
+      throw error;
+    }
+  },
+
   // Get user's bidding history
   async getMyBids() {
     try {

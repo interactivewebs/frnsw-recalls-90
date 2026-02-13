@@ -121,7 +121,7 @@ const Recalls = () => {
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">Recalls</h1>
         {user?.is_admin && (
-          <button onClick={() => toast('New Recall creation coming soon')} className="px-4 py-2 bg-frnsw-red text-white rounded-lg hover:bg-red-700 transition-colors">
+          <button onClick={() => navigate('/recalls/new')} className="px-4 py-2 bg-frnsw-red text-white rounded-lg hover:bg-red-700 transition-colors">
             + New Recall
           </button>
         )}
