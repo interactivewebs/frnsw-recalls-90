@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
 import { recallService } from '../../services/recallService';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
 const Calendar = () => {
-  const { user } = useAuth();
   const navigate = useNavigate();
   const [recalls, setRecalls] = useState([]);
   const [loading, setLoading] = useState(true);

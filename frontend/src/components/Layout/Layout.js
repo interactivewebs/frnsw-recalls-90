@@ -81,7 +81,7 @@ const Layout = ({ children }) => {
               >
                 Past Bids
               </Link>
-              {user?.role === 'admin' && (
+              {user?.is_admin && (
                 <Link
                   to="/admin"
                   className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${

@@ -32,7 +32,7 @@ const Recalls = () => {
   };
 
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
+    const date = new Date(`${dateString}T00:00:00`);
     return date.toLocaleDateString('en-AU', {
       weekday: 'long',
       year: 'numeric',
@@ -62,12 +62,12 @@ const Recalls = () => {
         return recalls.filter(recall => recall.status === 'active');
       case 'upcoming':
         return recalls.filter(recall => {
-          const recallDate = new Date(recall.date);
+          const recallDate = new Date(`${recall.date}T00:00:00`);
           return recallDate >= today && recall.status === 'active';
         });
       case 'past':
         return recalls.filter(recall => {
-          const recallDate = new Date(recall.date);
+          const recallDate = new Date(`${recall.date}T00:00:00`);
           return recallDate < today;
         });
       default:
@@ -89,7 +89,7 @@ const Recalls = () => {
   };
 
   const getPriorityColor = (date) => {
-    const recallDate = new Date(date);
+    const recallDate = new Date(`${date}T00:00:00`);
     const today = new Date();
     const diffTime = recallDate.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -134,13 +134,13 @@ const Recalls = () => {
             { key: 'all', label: 'All Recalls', count: recalls.length },
             { key: 'active', label: 'Active', count: recalls.filter(r => r.status === 'active').length },
             { key: 'upcoming', label: 'Upcoming', count: recalls.filter(r => {
-              const recallDate = new Date(r.date);
+              const recallDate = new Date(`${r.date}T00:00:00`);
               const today = new Date();
               today.setHours(0, 0, 0, 0);
               return recallDate >= today && r.status === 'active';
             }).length },
             { key: 'past', label: 'Past', count: recalls.filter(r => {
-              const recallDate = new Date(r.date);
+              const recallDate = new Date(`${r.date}T00:00:00`);
               const today = new Date();
               today.setHours(0, 0, 0, 0);
               return recallDate < today;
@@ -210,7 +210,7 @@ const Recalls = () => {
                       View Details
                     </button>
                     {user?.is_admin && (
-                      <button className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors">
+                      <button onClick={() => navigate(`/recalls/${recall.id}`)} className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors">
                         Edit
                       </button>
                     )}

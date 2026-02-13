@@ -126,7 +126,7 @@ const RecallDetail = () => {
 
   const formatTime = (timeString) => timeString.substring(0, 5);
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
+    const date = new Date(`${dateString}T00:00:00`);
     return date.toLocaleDateString('en-AU', {
       weekday: 'long',
       year: 'numeric',
@@ -137,7 +137,7 @@ const RecallDetail = () => {
 
   const isRecallAssigned = assignment && assignment.status === 'assigned';
   const canBid = !isRecallAssigned && recall.status === 'active';
-  const userResponse = users.find(u => u.id === user.id)?.bid_status || 'not_bid';
+  const userResponse = users.find(u => u.id === user?.id)?.bid_status || 'not_bid';
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
